@@ -1,21 +1,53 @@
 {
-	"site": {
-		"name": "My Website",
-		"url": "https://www.mywebsite.com",
-		"language": "en",
-		"description": "A flat-file CMS powered website for modern content management.",
-		"author": "John Doe"
-	},
 	"settings": {
 		"timezone": "UTC",
 		"dateFormat": "YYYY-MM-DD",
 		"paginationLimit": 10,
-		"defaultPostType": "page"
+		"defaultPostType": "page",
+		"language": "en",
+		"url": "https://www.mywebsite.com"
 	},
-	"postTypes": {
-		"pages": {
-			"directory": "content/pages",
-			"defaultTemplate": "page-template"
+	"seo": {
+		"title": "Welcome to My Website",
+		"description": "Discover amazing content and learn more about us.",
+		"keywords": [
+			"homepage",
+			"welcome",
+			"blog",
+			"content"
+		],
+		"extra": []
+	},
+	"postTypes": [
+		{
+			"name": "page",
+			"directory": "resources/pages"
 		}
+	],
+	"inserts": {
+		"head": [
+			{
+				"tag": "description-meta",
+				"script": "<meta name=\"description\" content=\"Custom description for the page\">"
+			},
+			{
+				"tag": "stylesheet",
+				"script": "<link rel=\"stylesheet\" href=\"https://example.com/styles.css\">"
+			},
+			{
+				"tag": "analytics-script",
+				"script": "<script src=\"https://example.com/head-script.js\" async></script>"
+			}
+		],
+		"endOfBody": [
+			{
+				"tag": "footer-script",
+				"script": "<script src=\"https://example.com/footer-script.js\"></script>"
+			},
+			{
+				"tag": "custom-logger",
+				"script": "<script>console.log('Custom script at the end of body');</script>"
+			}
+		]
 	}
 }

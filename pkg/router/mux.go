@@ -30,7 +30,7 @@ func SetupRouter() *mux.Router {
 
 	// Build route to trigger JavaScript bundling
 	r.HandleFunc("/build", func(w http.ResponseWriter, r *http.Request) {
-		err := js.TriggerBuild("./theme/", "./static/")
+		err := js.TriggerBuild("./sitedata/theme/", "./static/")
 		if err != nil {
 			http.Error(w, "Build failed: "+err.Error(), http.StatusInternalServerError)
 			return
