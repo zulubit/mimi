@@ -1,0 +1,59 @@
+{
+	"global_meta": {
+		"createdBy": "default user",
+		"type": "page"
+	},
+	"seo": {
+		"title": "Welcome to My Website",
+		"description": "Discover amazing content and learn more about us.",
+		"keywords": [
+			"homepage",
+			"welcome",
+			"blog",
+			"content"
+		],
+		"extra": []
+	},
+	"data": [
+		{
+			"type": "meta",
+			"renderable": false,
+			"data": {
+				"someFiled": "some data"
+			}
+		},
+		{
+			"type": "fragment",
+			"renderable": true,
+			"template": "my-element",
+			"data": {
+				"heading": "Experience Excellence",
+				"subheading": "Empowering Ideas and Solutions",
+				"backgroundImage": "hero-bg.jpg",
+				"cta": {
+					"text": "Learn More",
+					"link": "/about"
+				}
+			}
+		},
+		{
+			"type": "fragment",
+			"renderable": true,
+			"template": "features-template",
+			"data": {
+				"items": [
+					{
+						"icon": "feature1.png",
+						"title": "Fast & Reliable",
+						"description": "We prioritize speed and reliability in every project."
+					},
+					{
+						"icon": "feature2.png",
+						"title": "User-Centric",
+						"description": "Your satisfaction is our priority."
+					}
+				]
+			}
+		}
+	]
+}

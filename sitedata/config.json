@@ -1,0 +1,21 @@
+{
+	"site": {
+		"name": "My Website",
+		"url": "https://www.mywebsite.com",
+		"language": "en",
+		"description": "A flat-file CMS powered website for modern content management.",
+		"author": "John Doe"
+	},
+	"settings": {
+		"timezone": "UTC",
+		"dateFormat": "YYYY-MM-DD",
+		"paginationLimit": 10,
+		"defaultPostType": "page"
+	},
+	"postTypes": {
+		"pages": {
+			"directory": "content/pages",
+			"defaultTemplate": "page-template"
+		}
+	}
+}
