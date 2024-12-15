@@ -4,21 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
-	"github.com/zulubit/mimi/pkg/dejson"
 )
 
 // Config represents the structure of the configuration file
 type Config struct {
 	Settings struct {
-		Timezone        string `json:"timezone"`
 		DateFormat      string `json:"dateFormat"`
 		PaginationLimit int    `json:"paginationLimit"`
-		DefaultPostType string `json:"defaultPostType"`
 		Language        string `json:"language"`
-		URL             string `json:"url"`
 	} `json:"settings"`
-	Seo       dejson.SEO `jsodn:"seo"`
+	Seo       SEO `jsodn:"seo"`
 	PostTypes []struct {
 		Name      string `json:"name"`
 		Directory string `json:"directory"`

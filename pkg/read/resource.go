@@ -1,4 +1,4 @@
-package dejson
+package read
 
 import (
 	"encoding/json"

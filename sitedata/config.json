@@ -1,11 +1,8 @@
 {
 	"settings": {
-		"timezone": "UTC",
 		"dateFormat": "YYYY-MM-DD",
 		"paginationLimit": 10,
-		"defaultPostType": "page",
-		"language": "en",
-		"url": "https://www.mywebsite.com"
+		"language": "en"
 	},
 	"seo": {
 		"title": "Welcome to My Website",

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/zulubit/mimi/pkg/dejson"
 	"github.com/zulubit/mimi/pkg/read"
 	"github.com/zulubit/mimi/pkg/render"
 )
@@ -45,7 +44,7 @@ func GetResource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse and validate the page using dejson
-	page, err := dejson.ParsePage([]byte(pageData))
+	page, err := read.ParsePage([]byte(pageData))
 	if err != nil {
 		http.Error(w, "Error parsing page JSON", http.StatusInternalServerError)
 		fmt.Printf("Error parsing page JSON: %v\n", err)
