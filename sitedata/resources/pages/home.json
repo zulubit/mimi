@@ -1,7 +1,9 @@
 {
+	"route": "/",
+	"type": "page",
+	"group": "pages",
 	"global_meta": {
-		"createdBy": "default user",
-		"type": "page"
+		"createdBy": "default user"
 	},
 	"seo": {
 		"title": "Welcome to My Website",
@@ -14,7 +16,7 @@
 		],
 		"extra": []
 	},
-	"data": [
+	"content": [
 		{
 			"type": "meta",
 			"renderable": false,
@@ -34,6 +36,9 @@
 					"text": "Learn More",
 					"link": "/about"
 				}
+			},
+			"meta": {
+				"short": "short"
 			},
 			"internal": {
 				"hiddend": "hidden data"

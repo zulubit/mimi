@@ -6,15 +6,15 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zulubit/mimi/pkg/handle"
-	"github.com/zulubit/mimi/pkg/js"
+	"github.com/zulubit/mimi/pkg/load"
 )
 
-// ResourcePageData holds data for rendering the resource page
 // SetupRouter initializes the mux router and defines the routes
 func SetupRouter() *mux.Router {
 
 	// Create a new router
 	r := mux.NewRouter()
+	r.StrictSlash(true)
 
 	// API v1 routes
 	api := r.PathPrefix("/api/v1").Subrouter()
@@ -30,7 +30,7 @@ func SetupRouter() *mux.Router {
 
 	// Build route to trigger JavaScript bundling
 	r.HandleFunc("/build", func(w http.ResponseWriter, r *http.Request) {
-		err := js.TriggerBuild("./sitedata/theme/", "./static/")
+		err := load.TriggerBuild("./sitedata/theme/", "./static/")
 		if err != nil {
 			http.Error(w, "Build failed: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -39,12 +39,15 @@ func SetupRouter() *mux.Router {
 		w.Write([]byte("Build successful."))
 	}).Methods("GET")
 
-	r.HandleFunc("/{slug}", handle.GetResource).Methods("GET")
-
+	// Serve static files
 	staticDir := "./static/"
 	r.PathPrefix("/static/").Handler(
 		http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))),
 	).Methods("GET")
+
+	// Catch-all route for resource handling
+	// Define this last to ensure it acts as a fallback for undefined routes
+	r.PathPrefix("/").HandlerFunc(handle.GetResource).Methods("GET")
 
 	return r
 }
