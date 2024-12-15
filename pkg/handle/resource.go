@@ -11,10 +11,20 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/zulubit/mimi/pkg/dejson"
+	"github.com/zulubit/mimi/pkg/read"
 	"github.com/zulubit/mimi/pkg/render"
 )
 
+// TODO: this needs to be moved to read. Only the checking and page exists and returning responses should stay here.
+// when the resources are succesfully read, they need to be cached.
+// cache should probably have a version of itself saved to go back to. We should probably utilise boltdb for that.
 func GetResource(w http.ResponseWriter, r *http.Request) {
+	conf, err := read.ReadConfig("./sitedata/config.json")
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		fmt.Printf("Error reading config: %v\n", err)
+		return
+	}
 
 	// Extract the 'slug' from the URL
 	vars := mux.Vars(r)
@@ -74,7 +84,7 @@ func GetResource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render the page using RenderPage
-	renderedPage, err := render.RenderPage(seo, contentSlice)
+	renderedPage, err := render.RenderPage(*conf, seo, contentSlice)
 	if err != nil {
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		fmt.Printf("Error rendering page: %v\n", err)

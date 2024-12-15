@@ -34,6 +34,9 @@
 					"text": "Learn More",
 					"link": "/about"
 				}
+			},
+			"internal": {
+				"hiddend": "hidden data"
 			}
 		},
 		{

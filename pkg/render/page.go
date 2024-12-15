@@ -1,10 +1,11 @@
 package render
 
 import (
-	"bytes"
 	"encoding/json"
 	"html/template"
 	"strings"
+
+	"github.com/zulubit/mimi/pkg/read"
 )
 
 type PageData struct {
@@ -24,14 +25,67 @@ type Content struct {
 	Index   int
 }
 
-func PrepareTemplate(seo Seo, content []Content) string {
+func PrepareTemplate(config read.Config, seo Seo, content []Content) (string, error) {
+
+	pageBody, err := buildContetString(content)
+	if err != nil {
+		return "", err
+	}
+
+	configHead, configBody, err := buildConfigStrings(config)
+	if err != nil {
+		return "", err
+	}
+
+	return `<!DOCTYPE html>
+<html lang="` + config.Settings.Language + `">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="` + seo.Description + `">
+    <meta name="keywords" content="` + seo.Keywords + `">
+    <title>` + seo.Title + `</title>
+    <script type="module" src="/static/bundle.min.js"></script>
+	<link rel="stylesheet" href="/static/bundle.min.css">` + configHead.String() + `
+</head>
+<body>
+` +
+		pageBody.String() +
+		`
+    <!-- Optionally include custom elements here -->` + configBody.String() + `
+</body>
+</html>
+`, nil
+}
+
+func buildConfigStrings(conf read.Config) (*strings.Builder, *strings.Builder, error) {
+	var contentBuilder strings.Builder
+
+	for _, c := range conf.Inserts.Head {
+		// Build the content
+		contentBuilder.WriteString("\n")
+		contentBuilder.WriteString(c.Script)
+	}
+
+	var contentBuilderBody strings.Builder
+
+	for _, c := range conf.Inserts.EndOfBody {
+		// Build the content
+		contentBuilderBody.WriteString("\n")
+		contentBuilderBody.WriteString(c.Script)
+	}
+
+	return &contentBuilder, &contentBuilderBody, nil
+}
+
+func buildContetString(content []Content) (*strings.Builder, error) {
 	var contentBuilder strings.Builder
 
 	for _, c := range content {
 		// Escape JSON
 		escapedData, err := escapeJSON(c.Data)
 		if err != nil {
-			escapedData = "{}" // Fallback to empty JSON if escaping fails
+			return nil, err
 		}
 
 		// Build the content
@@ -44,25 +98,7 @@ func PrepareTemplate(seo Seo, content []Content) string {
 		contentBuilder.WriteString(">")
 	}
 
-	return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{.Seo.Description}}">
-    <meta name="keywords" content="{{.Seo.Keywords}}">
-    <title>{{.Seo.Title}}</title>
-    <script type="module" src="/static/bundle.min.js"></script>
-	<link rel="stylesheet" href="/static/bundle.min.css">
-</head>
-<body>
-` +
-		contentBuilder.String() +
-		`
-    <!-- Optionally include custom elements here -->
-</body>
-</html>
-`
+	return &contentBuilder, nil
 }
 
 // escapeJSON ensures that JSON is safe for embedding in HTML attributes
@@ -85,25 +121,11 @@ func escapeJSON(input string) (string, error) {
 }
 
 // RenderPage renders an HTML page using the provided SEO and content data
-func RenderPage(seo Seo, content []Content) (string, error) {
-	t := PrepareTemplate(seo, content)
-	// Parse the colocated template
-	tmpl, err := template.New("page").Parse(t)
-	if err != nil {
-		return "", err
-
-	}
-
-	data := PageData{
-		Seo:     seo,
-		Content: []Content{},
-	}
-
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, data)
+func RenderPage(conf read.Config, seo Seo, content []Content) (string, error) {
+	t, err := PrepareTemplate(conf, seo, content)
 	if err != nil {
 		return "", err
 	}
 
-	return buf.String(), nil
+	return t, nil
 }

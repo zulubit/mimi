@@ -26,6 +26,7 @@ type DataItem struct {
 	Renderable bool                   `json:"renderable"`
 	Template   string                 `json:"template,omitempty"`
 	Data       map[string]interface{} `json:"data"`
+	Internal   map[string]interface{} `json:"internal"`
 }
 
 // Page defines the overall structure of a page
