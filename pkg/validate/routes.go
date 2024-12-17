@@ -19,6 +19,11 @@ func ValidateRoutes(resources *[]read.Resource) error {
 		if routeMap[r.Route] {
 			return errors.New("duplicate route")
 		}
+
+		if strings.HasPrefix(r.Route, "/api/v") || strings.HasPrefix(r.Route, "/mimi-admin") {
+			return errors.New("route collides with api/v1(2,3) or /mimi-admin/ routes")
+		}
+
 		routeMap[r.Route] = true
 	}
 	return nil

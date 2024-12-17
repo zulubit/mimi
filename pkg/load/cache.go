@@ -61,5 +61,3 @@ func GetResources() (ResoruceMap, error) {
 
 	return resources, nil
 }
-
-// TODO: validate routes
