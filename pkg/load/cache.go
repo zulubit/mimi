@@ -1,6 +1,9 @@
 package load
 
-import "github.com/zulubit/mimi/pkg/read"
+import (
+	"github.com/zulubit/mimi/pkg/read"
+	"github.com/zulubit/mimi/pkg/validate"
+)
 
 type ResoruceMap *[]read.Resource
 
@@ -37,6 +40,12 @@ func BuildResourceCache() error {
 	if err != nil {
 		return err
 	}
+
+	err = validate.ValidateRoutes(rc)
+	if err != nil {
+		return err
+	}
+
 	resources = rc
 
 	return nil
@@ -54,5 +63,3 @@ func GetResources() (ResoruceMap, error) {
 }
 
 // TODO: validate routes
-// TODO merge in default SEO if missing
-// page sould have classes, that are applied to a body
