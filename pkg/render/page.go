@@ -12,8 +12,6 @@ import (
 
 func PrepareTemplate(config *read.Config, resource *read.Resource) (string, error) {
 
-	seo := resource.SEO
-
 	pageBody, err := buildContentString(resource)
 	if err != nil {
 		return "", err
@@ -28,10 +26,7 @@ func PrepareTemplate(config *read.Config, resource *read.Resource) (string, erro
 <html lang="` + config.Settings.Language + `">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="` + seo.Description + `">
-    <meta name="keywords" content="` + strings.Join(seo.Keywords, ", ") + `">
-    <title>` + seo.Title + `</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">` + metaDescription(resource) + metaKeywords(resource) + titleTag(config, resource) + metaGlobalSeo(config) + metaExtra(resource) + `
     <script type="module" src="/static/bundle.min.js"></script>
 	<link rel="stylesheet" href="/static/bundle.min.css">` + configHead.String() + `
 </head>
@@ -39,10 +34,52 @@ func PrepareTemplate(config *read.Config, resource *read.Resource) (string, erro
 ` +
 		pageBody.String() +
 		`
-    <!-- Optionally include custom elements here -->` + configBody.String() + `
+    ` + configBody.String() + `
 </body>
 </html>
 `, nil
+}
+
+func titleTag(config *read.Config, resource *read.Resource) string {
+	if resource.SEO.Title == "" {
+		return `<title>` + config.Seo.Title + " - " + resource.Name + `</title>`
+	}
+
+	return `<title>` + resource.SEO.Title + `</title>`
+}
+
+func metaDescription(resource *read.Resource) string {
+	if resource.SEO.Description != "" {
+		return `<meta name="description" content="` + resource.SEO.Description + `">`
+	}
+	return ""
+}
+
+func metaKeywords(resource *read.Resource) string {
+	if len(resource.SEO.Keywords) > 0 {
+		return `<meta name="keywords" content="` + strings.Join(resource.SEO.Keywords, ", ") + `">`
+	}
+	return ""
+}
+
+func metaGlobalSeo(config *read.Config) string {
+	globalString := ""
+	if len(config.Seo.Global) > 0 {
+		for _, g := range config.Seo.Global {
+			globalString += g + " "
+		}
+	}
+	return globalString
+}
+
+func metaExtra(resource *read.Resource) string {
+	extras := ""
+	if len(resource.SEO.Extra) > 0 {
+		for _, e := range resource.SEO.Extra {
+			extras += e + " "
+		}
+	}
+	return extras
 }
 
 func buildConfigStrings(conf *read.Config) (*strings.Builder, *strings.Builder, error) {

@@ -6,6 +6,11 @@ import (
 	"os"
 )
 
+type SEOGlobal struct {
+	Title  string   `json:"title"`
+	Global []string `json:"global"`
+}
+
 // Config represents the structure of the configuration file
 type Config struct {
 	Settings struct {
@@ -13,7 +18,7 @@ type Config struct {
 		PaginationLimit int    `json:"paginationLimit"`
 		Language        string `json:"language"`
 	} `json:"settings"`
-	Seo       SEO `jsodn:"seo"`
+	Seo       SEOGlobal `jsodn:"seo"`
 	PostTypes []struct {
 		Name      string `json:"name"`
 		Directory string `json:"directory"`

@@ -1,13 +1,14 @@
 {
 	"route": "/",
 	"type": "page",
+	"name": "home",
 	"class": "specific",
 	"group": "pages",
 	"global_meta": {
 		"createdBy": "default user"
 	},
 	"seo": {
-		"title": "Welcome to My Website",
+		"title": "",
 		"description": "Discover amazing content and learn more about us.",
 		"keywords": [
 			"homepage",

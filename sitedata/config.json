@@ -5,15 +5,10 @@
 		"language": "en"
 	},
 	"seo": {
-		"title": "Welcome to My Website",
-		"description": "Discover amazing content and learn more about us.",
-		"keywords": [
-			"homepage",
-			"welcome",
-			"blog",
-			"content"
-		],
-		"extra": []
+		"title": "MySite",
+		"global": [
+			"<meta name='asdf'/>"
+		]
 	},
 	"postTypes": [
 		{

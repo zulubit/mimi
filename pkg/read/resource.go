@@ -35,6 +35,7 @@ type DataItem struct {
 type Resource struct {
 	Route      string     `json:"route"`
 	Class      string     `json:"class"`
+	Name       string     `json:"Name"`
 	Type       string     `json:"type"`
 	Group      string     `json:"group"`
 	GlobalMeta GlobalMeta `json:"global_meta"`
@@ -97,9 +98,6 @@ func ParseResource(rawJSON []byte) (*Resource, error) {
 func validateResource(page *Resource) error {
 	if page.GlobalMeta.CreatedBy == "" {
 		return errors.New("global_meta.createdBy is required")
-	}
-	if page.SEO.Title == "" {
-		return errors.New("seo.title is required")
 	}
 	if page.SEO.Description == "" {
 		return errors.New("seo.description is required")
