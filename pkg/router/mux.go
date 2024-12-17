@@ -29,8 +29,8 @@ func SetupRouter() *mux.Router {
 	}).Methods("GET")
 
 	// Build route to trigger JavaScript bundling
-	r.HandleFunc("/build", func(w http.ResponseWriter, r *http.Request) {
-		err := load.TriggerBuild("./sitedata/theme/", "./static/")
+	api.HandleFunc("/build", func(w http.ResponseWriter, r *http.Request) {
+		err := load.BuildInternals()
 		if err != nil {
 			http.Error(w, "Build failed: "+err.Error(), http.StatusInternalServerError)
 			return
