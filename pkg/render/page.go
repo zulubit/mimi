@@ -35,7 +35,7 @@ func PrepareTemplate(config *read.Config, resource *read.Resource) (string, erro
     <script type="module" src="/static/bundle.min.js"></script>
 	<link rel="stylesheet" href="/static/bundle.min.css">` + configHead.String() + `
 </head>
-<body>
+	<body class="` + resource.Type + " " + resource.Class + `">
 ` +
 		pageBody.String() +
 		`

@@ -1,6 +1,7 @@
 {
 	"route": "/",
 	"type": "page",
+	"class": "specific",
 	"group": "pages",
 	"global_meta": {
 		"createdBy": "default user"

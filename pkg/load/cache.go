@@ -52,3 +52,7 @@ func GetResources() (ResoruceMap, error) {
 
 	return resources, nil
 }
+
+// TODO: validate routes
+// TODO merge in default SEO if missing
+// page sould have classes, that are applied to a body

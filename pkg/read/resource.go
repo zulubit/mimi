@@ -34,6 +34,7 @@ type DataItem struct {
 // Resource defines the overall structure of a page
 type Resource struct {
 	Route      string     `json:"route"`
+	Class      string     `json:"class"`
 	Type       string     `json:"type"`
 	Group      string     `json:"group"`
 	GlobalMeta GlobalMeta `json:"global_meta"`
