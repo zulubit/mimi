@@ -27,7 +27,7 @@
 			}
 		},
 		{
-			"type": "fragment",
+			"type": "component",
 			"renderable": true,
 			"template": "my-element",
 			"data": {
@@ -44,10 +44,26 @@
 			},
 			"internal": {
 				"hiddend": "hidden data"
-			}
+			},
+			"children": [
+				{
+					"type": "component",
+					"renderable": true,
+					"template": "features-template",
+					"data": {
+						"items": [
+							{
+								"icon": "feature1.png",
+								"title": "Fast & Reliable",
+								"description": "We prioritize speed and reliability in every project."
+							}
+						]
+					}
+				}
+			]
 		},
 		{
-			"type": "fragment",
+			"type": "component",
 			"renderable": true,
 			"template": "features-template",
 			"data": {
@@ -56,11 +72,6 @@
 						"icon": "feature1.png",
 						"title": "Fast & Reliable",
 						"description": "We prioritize speed and reliability in every project."
-					},
-					{
-						"icon": "feature2.png",
-						"title": "User-Centric",
-						"description": "Your satisfaction is our priority."
 					}
 				]
 			}

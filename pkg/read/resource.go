@@ -29,6 +29,7 @@ type DataItem struct {
 	Meta       map[string]interface{} `json:"meta"`
 	Data       map[string]interface{} `json:"data"`
 	Internal   map[string]interface{} `json:"internal"`
+	Children   []DataItem             `json:"children"`
 }
 
 // Resource defines the overall structure of a page

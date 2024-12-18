@@ -3,7 +3,6 @@ package render
 import (
 	"bytes"
 	"encoding/json"
-	"html"
 	"html/template"
 	"strings"
 
@@ -12,7 +11,7 @@ import (
 
 func PrepareTemplate(config *read.Config, resource *read.Resource) (string, error) {
 
-	pageBody, err := buildContentString(resource)
+	pageBody, err := buildContentString(resource.Content)
 	if err != nil {
 		return "", err
 	}
@@ -102,10 +101,10 @@ func buildConfigStrings(conf *read.Config) (*strings.Builder, *strings.Builder, 
 	return &contentBuilder, &contentBuilderBody, nil
 }
 
-func buildContentString(resource *read.Resource) (*strings.Builder, error) {
+func buildContentString(content []read.DataItem) (*strings.Builder, error) {
 	var contentBuilder strings.Builder
 
-	for _, c := range resource.Content {
+	for _, c := range content {
 		if c.Renderable {
 			// Marshal the map to JSON
 			rawJSON, err := json.Marshal(c.Data)
@@ -120,15 +119,26 @@ func buildContentString(resource *read.Resource) (*strings.Builder, error) {
 				return nil, err
 			}
 
-			// Escape the JSON for HTML
-			escapedJSON := html.EscapeString(minifiedJSON.String())
-
 			// Build the content
 			contentBuilder.WriteString("\n<")
 			contentBuilder.WriteString(c.Template)
-			contentBuilder.WriteString(` mimi-data="`)
-			contentBuilder.WriteString(escapedJSON)
-			contentBuilder.WriteString(`"></`)
+			contentBuilder.WriteString(">")
+
+			// Add JSON as a script tag
+			contentBuilder.WriteString(`<script type="application/json">`)
+			contentBuilder.WriteString(minifiedJSON.String())
+			contentBuilder.WriteString(`</script>`)
+
+			// Handle children here
+			if len(c.Children) > 0 {
+				bs, err := buildContentString(c.Children)
+				if err != nil {
+					return nil, err
+				}
+				contentBuilder.WriteString(bs.String())
+			}
+
+			contentBuilder.WriteString(`</`)
 			contentBuilder.WriteString(c.Template)
 			contentBuilder.WriteString(">")
 		}
@@ -155,3 +165,6 @@ func escapeJSON(input string) (string, error) {
 	// Convert JSON bytes to a string and ensure it's HTML-safe
 	return template.HTMLEscapeString(string(escaped)), nil
 }
+
+// TODO: we will have 3 data types: resources, fragments and meta. Fragments should be wrapped in a div, span or section.
+// fragments are just reuable templates that are meant to be set once and carry over all the pages (central editing of headers and footer)

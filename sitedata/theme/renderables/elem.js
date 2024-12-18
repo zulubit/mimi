@@ -1,4 +1,5 @@
 import { LitElement, html } from '../vendor/lit.min.js';
+import mimiJson from '../vendor/mimiJson.js';
 
 class MyElement extends LitElement {
   static properties = {
@@ -12,28 +13,17 @@ class MyElement extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    // Parse the 'mimi-data' attribute as JSON and assign it to 'data'
-    const attrValue = this.getAttribute('mimi-data');
-    if (attrValue) {
-      try {
-        this.data = JSON.parse(attrValue);
-      } catch (error) {
-        console.error('Invalid JSON in mimi-data:', error);
-      }
-    }
+    // Use the helper to parse JSON from the <script> tag
+    this.data = mimiJson(this);
   }
 
   render() {
     return html`
       <div>
-        <h1>${this.data.title || 'No Title'}</h1>
-        <p>${this.data.description || 'No Description'}</p>
-        <h3>Keywords:</h3>
-        <ul>
-          ${this.data.meta?.keywords?.map(
-            keyword => html`<li>${keyword}</li>`
-          )}
-        </ul>
+        <h1>${this.data.heading || 'No Heading'}</h1>
+        <p>${this.data.subheading || 'No Subheading'}</p>
+        <p><strong>CTA:</strong> ${this.data.cta?.text || 'No CTA'} (<a href="${this.data.cta?.link}">Link</a>)</p>
+        <p><strong>Background Image:</strong> ${this.data.backgroundImage || 'No Background Image'}</p>
       </div>
     `;
   }
