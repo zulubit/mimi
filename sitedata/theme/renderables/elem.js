@@ -3,17 +3,16 @@ import mimiJson from '../vendor/mimiJson.js';
 
 class MyElement extends LitElement {
   static properties = {
-    data: { type: Object }, // Property to store parsed data
+    data: { type: Object }, 
   };
 
   constructor() {
     super();
-    this.data = {}; // Initialize as an empty object
+    this.data = {}; 
   }
 
   connectedCallback() {
     super.connectedCallback();
-    // Use the helper to parse JSON from the <script> tag
     this.data = mimiJson(this);
   }
 
