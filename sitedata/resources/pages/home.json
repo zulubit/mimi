@@ -31,10 +31,16 @@
 			},
 			"children": [
 				{
-					"type": "raw",
+					"type": "element",
 					"class": "someclass",
 					"template": "p",
-					"body": "testbody"
+					"body": "testbody",
+					"children": [
+						{
+							"type": "raw",
+							"body": "<span>ts\npa</span>"
+						}
+					]
 				}
 			]
 		},

@@ -96,7 +96,6 @@ func ParseResource(rawJSON []byte) (*Resource, error) {
 
 // validateResource checks for required fields and other constraints
 func validateResource(page *Resource) error {
-
 	if page.SEO.Description == "" {
 		return errors.New("seo.description is required")
 	}

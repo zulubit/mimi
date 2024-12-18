@@ -3,6 +3,7 @@ package render
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"strings"
 
@@ -105,9 +106,8 @@ func buildContentString(content []read.DataItem) (*strings.Builder, error) {
 	var contentBuilder strings.Builder
 
 	for _, c := range content {
-		// Handle "raw" items
-		if c.Type == "raw" {
-			// Render raw content directly
+		switch c.Type {
+		case "element": // Handle "element" items
 			contentBuilder.WriteString("\n<")
 			contentBuilder.WriteString(c.Template) // Template becomes the HTML tag
 			if c.Class != "" {
@@ -117,6 +117,8 @@ func buildContentString(content []read.DataItem) (*strings.Builder, error) {
 			}
 			contentBuilder.WriteString(">")
 			contentBuilder.WriteString(template.HTMLEscapeString(c.Body)) // Add raw body content
+
+			// Handle children recursively
 			if len(c.Children) > 0 {
 				childContent, err := buildContentString(c.Children)
 				if err != nil {
@@ -124,10 +126,12 @@ func buildContentString(content []read.DataItem) (*strings.Builder, error) {
 				}
 				contentBuilder.WriteString(childContent.String())
 			}
+
 			contentBuilder.WriteString("</")
 			contentBuilder.WriteString(c.Template)
 			contentBuilder.WriteString(">")
-		} else if c.Type == "component" { // Handle "component" items
+
+		case "component": // Handle "component" items
 			// Marshal the map to JSON
 			rawJSON, err := json.Marshal(c.Data)
 			if err != nil {
@@ -165,6 +169,13 @@ func buildContentString(content []read.DataItem) (*strings.Builder, error) {
 			contentBuilder.WriteString(`</`)
 			contentBuilder.WriteString(c.Template)
 			contentBuilder.WriteString(">")
+
+		case "raw": // Handle "raw" items
+			// Add raw HTML directly, but escape it for safety
+			contentBuilder.WriteString(c.Body)
+
+		default: // Handle unsupported or unknown types
+			return nil, fmt.Errorf("unsupported content type: %s", c.Type)
 		}
 	}
 
