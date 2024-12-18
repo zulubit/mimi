@@ -105,7 +105,29 @@ func buildContentString(content []read.DataItem) (*strings.Builder, error) {
 	var contentBuilder strings.Builder
 
 	for _, c := range content {
-		if c.Renderable {
+		// Handle "raw" items
+		if c.Type == "raw" {
+			// Render raw content directly
+			contentBuilder.WriteString("\n<")
+			contentBuilder.WriteString(c.Template) // Template becomes the HTML tag
+			if c.Class != "" {
+				contentBuilder.WriteString(` class="`)
+				contentBuilder.WriteString(template.HTMLEscapeString(c.Class))
+				contentBuilder.WriteString(`"`)
+			}
+			contentBuilder.WriteString(">")
+			contentBuilder.WriteString(template.HTMLEscapeString(c.Body)) // Add raw body content
+			if len(c.Children) > 0 {
+				childContent, err := buildContentString(c.Children)
+				if err != nil {
+					return nil, err
+				}
+				contentBuilder.WriteString(childContent.String())
+			}
+			contentBuilder.WriteString("</")
+			contentBuilder.WriteString(c.Template)
+			contentBuilder.WriteString(">")
+		} else if c.Type == "component" { // Handle "component" items
 			// Marshal the map to JSON
 			rawJSON, err := json.Marshal(c.Data)
 			if err != nil {
@@ -119,23 +141,25 @@ func buildContentString(content []read.DataItem) (*strings.Builder, error) {
 				return nil, err
 			}
 
-			// Build the content
+			// Build the content for the component
 			contentBuilder.WriteString("\n<")
 			contentBuilder.WriteString(c.Template)
-			contentBuilder.WriteString(">")
+			if c.Class != "" {
+				contentBuilder.WriteString(` class="`)
+				contentBuilder.WriteString(template.HTMLEscapeString(c.Class))
+				contentBuilder.WriteString(`"`)
+			}
+			contentBuilder.WriteString(` mimi-data='`)
+			contentBuilder.WriteString(template.HTMLEscapeString(minifiedJSON.String()))
+			contentBuilder.WriteString(`'>`)
 
-			// Add JSON as a script tag
-			contentBuilder.WriteString(`<script type="application/json">`)
-			contentBuilder.WriteString(minifiedJSON.String())
-			contentBuilder.WriteString(`</script>`)
-
-			// Handle children here
+			// Handle children recursively
 			if len(c.Children) > 0 {
-				bs, err := buildContentString(c.Children)
+				childContent, err := buildContentString(c.Children)
 				if err != nil {
 					return nil, err
 				}
-				contentBuilder.WriteString(bs.String())
+				contentBuilder.WriteString(childContent.String())
 			}
 
 			contentBuilder.WriteString(`</`)

@@ -1,14 +1,14 @@
-export default function mimiJson(element, type = 'application/json') {
-  const script = element.querySelector(`script[type="${type}"]`);
-  if (script) {
+export default function mimiJson(element, attributeName = 'mimi-data') {
+  const data = element.getAttribute(attributeName);
+  if (data) {
     try {
-      return JSON.parse(script.textContent);
+      return JSON.parse(data);
     } catch (error) {
-      console.error('Invalid JSON in <script>: ', error);
+      console.error(`Invalid JSON in ${attributeName} attribute:`, error);
     }
   } else {
-    console.warn(`No <script type="${type}"> tag found inside <${element.localName}>.`);
+    console.warn(`No ${attributeName} attribute found inside <${element.localName}>.`);
   }
-  return {}; // Return an empty object if parsing fails or no script is found
+  return {}; // Return an empty object if parsing fails or no attribute is found
 }
 

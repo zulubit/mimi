@@ -4,9 +4,6 @@
 	"name": "home",
 	"class": "specific",
 	"group": "pages",
-	"global_meta": {
-		"createdBy": "default user"
-	},
 	"seo": {
 		"title": "",
 		"description": "Discover amazing content and learn more about us.",
@@ -20,15 +17,8 @@
 	},
 	"content": [
 		{
-			"type": "meta",
-			"renderable": false,
-			"data": {
-				"someFiled": "some data"
-			}
-		},
-		{
 			"type": "component",
-			"renderable": true,
+			"class": "someclass",
 			"template": "my-element",
 			"data": {
 				"heading": "Experience Excellence",
@@ -39,32 +29,17 @@
 					"link": "/about"
 				}
 			},
-			"meta": {
-				"short": "short"
-			},
-			"internal": {
-				"hiddend": "hidden data"
-			},
 			"children": [
 				{
-					"type": "component",
-					"renderable": true,
-					"template": "features-template",
-					"data": {
-						"items": [
-							{
-								"icon": "feature1.png",
-								"title": "Fast & Reliable",
-								"description": "We prioritize speed and reliability in every project."
-							}
-						]
-					}
+					"type": "raw",
+					"class": "someclass",
+					"template": "p",
+					"body": "testbody"
 				}
 			]
 		},
 		{
 			"type": "component",
-			"renderable": true,
 			"template": "features-template",
 			"data": {
 				"items": [

@@ -23,25 +23,24 @@ type SEO struct {
 
 // DataItem represents a single item in the `data` array
 type DataItem struct {
-	Type       string                 `json:"type"`
-	Renderable bool                   `json:"renderable"`
-	Template   string                 `json:"template,omitempty"`
-	Meta       map[string]interface{} `json:"meta"`
-	Data       map[string]interface{} `json:"data"`
-	Internal   map[string]interface{} `json:"internal"`
-	Children   []DataItem             `json:"children"`
+	Type     string                 `json:"type"`
+	Template string                 `json:"template,omitempty"`
+	Class    string                 `json:"class"`
+	Body     string                 `json:"body"`
+	Data     map[string]interface{} `json:"data"`
+	Children []DataItem             `json:"children"`
 }
 
 // Resource defines the overall structure of a page
 type Resource struct {
-	Route      string     `json:"route"`
-	Class      string     `json:"class"`
-	Name       string     `json:"Name"`
-	Type       string     `json:"type"`
-	Group      string     `json:"group"`
-	GlobalMeta GlobalMeta `json:"global_meta"`
-	SEO        SEO        `json:"seo"`
-	Content    []DataItem `json:"content"`
+	Route   string                 `json:"route"`
+	Class   string                 `json:"class"`
+	Name    string                 `json:"Name"`
+	Type    string                 `json:"type"`
+	Group   string                 `json:"group"`
+	Meta    map[string]interface{} `json:"meta"`
+	SEO     SEO                    `json:"seo"`
+	Content []DataItem             `json:"content"`
 }
 
 func ReadResources(dirPath string) (*[]Resource, error) {
@@ -97,18 +96,13 @@ func ParseResource(rawJSON []byte) (*Resource, error) {
 
 // validateResource checks for required fields and other constraints
 func validateResource(page *Resource) error {
-	if page.GlobalMeta.CreatedBy == "" {
-		return errors.New("global_meta.createdBy is required")
-	}
+
 	if page.SEO.Description == "" {
 		return errors.New("seo.description is required")
 	}
 	for _, item := range page.Content {
 		if item.Type == "" {
 			return errors.New("data item type is required")
-		}
-		if item.Renderable && item.Template == "" {
-			return errors.New("renderable data item must have a template")
 		}
 	}
 	return nil
