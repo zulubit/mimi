@@ -11,7 +11,7 @@ func BuildInternals() error {
 		return err
 	}
 
-	err = BuildResourceCache()
+	err = BuildPageCache()
 	if err != nil {
 		return err
 	}

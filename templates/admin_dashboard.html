@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Admin Dashboard</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+			display: flex;
+			flex-direction: column;
+			height: 100vh;
+		}
+
+		header {
+			background-color: #333;
+			color: white;
+			padding: 10px;
+			text-align: center;
+		}
+
+		main {
+			display: flex;
+			flex: 1;
+			overflow: hidden;
+		}
+
+		.editor-container {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			margin: 10px;
+			border: 1px solid #ddd;
+		}
+
+		.editor-header {
+			background-color: #f4f4f4;
+			border-bottom: 1px solid #ddd;
+			padding: 5px;
+			text-align: center;
+			font-weight: bold;
+		}
+
+		#config-editor,
+		#markdown-editor,
+		#template-editor {
+			height: calc(100% - 30px);
+		}
+	</style>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.js"></script>
+</head>
+
+<body>
+	<header>
+		<h1>Admin Dashboard</h1>
+	</header>
+	<main>
+		<div class="editor-container">
+			<div class="editor-header">Page Configuration (JSON)</div>
+			<div id="config-editor"></div>
+		</div>
+		<div class="editor-container">
+			<div class="editor-header">Markdown Content</div>
+			<div id="markdown-editor"></div>
+		</div>
+		<div class="editor-container">
+			<div class="editor-header">HTML Template</div>
+			<div id="template-editor"></div>
+		</div>
+	</main>
+
+	<script>
+		require.config({paths: {'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs'}});
+
+		require(['vs/editor/editor.main'], function () {
+			// Page Configuration Editor
+			const configEditor = monaco.editor.create(document.getElementById('config-editor'), {
+				value: `{{.Config}}`,
+				language: 'json',
+				theme: 'vs-dark',
+			});
+
+			// Markdown Editor
+			const markdownEditor = monaco.editor.create(document.getElementById('markdown-editor'), {
+				value: `{{.Markdown}}`,
+				language: 'markdown',
+				theme: 'vs-dark',
+			});
+
+			// HTML Template Editor
+			const templateEditor = monaco.editor.create(document.getElementById('template-editor'), {
+				value: `{{.Template}}`,
+				language: 'html',
+				theme: 'vs-dark',
+			});
+		});
+	</script>
+</body>
+
+</html>

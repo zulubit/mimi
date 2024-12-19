@@ -5,201 +5,138 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"os"
 	"strings"
 
+	"github.com/yuin/goldmark"
 	"github.com/zulubit/mimi/pkg/read"
+	"gopkg.in/yaml.v3"
 )
 
-func PrepareTemplate(config *read.Config, resource *read.Resource) (string, error) {
+// Page represents the parsed content and frontmatter of a Markdown file
+type Page struct {
+	Content template.HTML          // Rendered Markdown content
+	Data    map[string]interface{} // Frontmatter fields as key-value pairs
+}
 
-	pageBody, err := buildContentString(resource.Content)
+func RenderPage(pageConfigPath string, globalConfig *read.Config) (string, error) {
+	// Load and parse the page configuration
+	pageConfig, seo, err := loadPageConfig(pageConfigPath)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error loading page configuration: %w", err)
 	}
 
-	configHead, configBody, err := buildConfigStrings(config)
+	// Extract paths from the page configuration
+	markdownPath, ok := pageConfig["markdown"].(string)
+	if !ok {
+		return "", fmt.Errorf("'markdown' field missing or invalid in page config")
+	}
+	layoutPath, ok := pageConfig["layout"].(string)
+	if !ok {
+		return "", fmt.Errorf("'layout' field missing or invalid in page config")
+	}
+	templatePath, ok := pageConfig["template"].(string)
+	if !ok {
+		return "", fmt.Errorf("'template' field missing or invalid in page config")
+	}
+
+	// Parse the Markdown file
+	page, err := parseMarkdown(markdownPath)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error parsing Markdown file: %w", err)
 	}
 
-	return `<!DOCTYPE html>
-<html lang="` + config.Settings.Language + `">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">` + metaDescription(resource) + metaKeywords(resource) + titleTag(config, resource) + metaGlobalSeo(config) + metaExtra(resource) + `
-    <script type="module" src="/static/bundle.min.js"></script>
-	<link rel="stylesheet" href="/static/bundle.min.css">` + configHead.String() + `
-</head>
-	<body class="` + resource.Type + " " + resource.Class + `">
-` +
-		pageBody.String() +
-		`
-    ` + configBody.String() + `
-</body>
-</html>
-`, nil
+	// Parse the page-specific template
+	pageTemplate, err := template.ParseFiles(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("Error loading page template: %w", err)
+	}
+
+	// Render the page content
+	var pageContent bytes.Buffer
+	err = pageTemplate.Execute(&pageContent, page)
+	if err != nil {
+		return "", fmt.Errorf("Error rendering page content: %w", err)
+	}
+
+	// Embed rendered content into the page data
+	page.Data["RenderedContent"] = template.HTML(pageContent.String())
+	page.Data["seo"] = seo
+	page.Data["globalConfig"] = globalConfig // Add global config to the page data
+
+	// Parse the layout template
+	layoutTemplate, err := template.ParseFiles(layoutPath)
+	if err != nil {
+		return "", fmt.Errorf("Error loading layout template: %w", err)
+	}
+
+	// Render the final page with layout
+	var renderedPage bytes.Buffer
+	err = layoutTemplate.Execute(&renderedPage, page.Data)
+	if err != nil {
+		return "", fmt.Errorf("Error rendering final page: %w", err)
+	}
+
+	return renderedPage.String(), nil
 }
 
-func titleTag(config *read.Config, resource *read.Resource) string {
-	if resource.SEO.Title == "" {
-		return `<title>` + config.Seo.Title + " - " + resource.Name + `</title>`
+// parseMarkdown reads and parses a Markdown file into a Page struct
+func parseMarkdown(markdownPath string) (Page, error) {
+	var page Page
+
+	// Read the Markdown file
+	content, err := os.ReadFile(markdownPath)
+	if err != nil {
+		return page, fmt.Errorf("failed to read Markdown file: %w", err)
 	}
 
-	return `<title>` + resource.SEO.Title + `</title>`
+	// Split frontmatter and body
+	parts := strings.SplitN(string(content), "---", 3)
+	if len(parts) < 3 {
+		return page, fmt.Errorf("invalid Markdown format in file: %s", markdownPath)
+	}
+
+	// Parse frontmatter into Data
+	var frontmatter map[string]interface{}
+	err = yaml.Unmarshal([]byte(parts[1]), &frontmatter)
+	if err != nil {
+		return page, fmt.Errorf("failed to parse frontmatter: %w", err)
+	}
+	page.Data = frontmatter
+
+	// Convert Markdown body to HTML
+	var buf bytes.Buffer
+	err = goldmark.New().Convert([]byte(parts[2]), &buf)
+	if err != nil {
+		return page, fmt.Errorf("failed to render Markdown to HTML: %w", err)
+	}
+	page.Content = template.HTML(buf.String()) // Mark as safe HTML
+
+	return page, nil
 }
 
-func metaDescription(resource *read.Resource) string {
-	if resource.SEO.Description != "" {
-		return `<meta name="description" content="` + resource.SEO.Description + `">`
-	}
-	return ""
-}
-
-func metaKeywords(resource *read.Resource) string {
-	if len(resource.SEO.Keywords) > 0 {
-		return `<meta name="keywords" content="` + strings.Join(resource.SEO.Keywords, ", ") + `">`
-	}
-	return ""
-}
-
-func metaGlobalSeo(config *read.Config) string {
-	globalString := ""
-	if len(config.Seo.Global) > 0 {
-		for _, g := range config.Seo.Global {
-			globalString += g + " "
-		}
-	}
-	return globalString
-}
-
-func metaExtra(resource *read.Resource) string {
-	extras := ""
-	if len(resource.SEO.Extra) > 0 {
-		for _, e := range resource.SEO.Extra {
-			extras += e + " "
-		}
-	}
-	return extras
-}
-
-func buildConfigStrings(conf *read.Config) (*strings.Builder, *strings.Builder, error) {
-	var contentBuilder strings.Builder
-
-	for _, c := range conf.Inserts.Head {
-		// Build the content
-		contentBuilder.WriteString("\n")
-		contentBuilder.WriteString(c.Script)
+// loadPageConfig reads and parses the page's JSON configuration file
+func loadPageConfig(configPath string) (map[string]interface{}, map[string]string, error) {
+	// Read the JSON file
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to load page config: %w", err)
 	}
 
-	var contentBuilderBody strings.Builder
-
-	for _, c := range conf.Inserts.EndOfBody {
-		// Build the content
-		contentBuilderBody.WriteString("\n")
-		contentBuilderBody.WriteString(c.Script)
+	// Parse the JSON data
+	var pageConfig map[string]interface{}
+	err = json.Unmarshal(data, &pageConfig)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to parse page config: %w", err)
 	}
 
-	return &contentBuilder, &contentBuilderBody, nil
-}
-
-func buildContentString(content []read.DataItem) (*strings.Builder, error) {
-	var contentBuilder strings.Builder
-
-	for _, c := range content {
-		switch c.Type {
-		case "element": // Handle "element" items
-			contentBuilder.WriteString("\n<")
-			contentBuilder.WriteString(c.Template) // Template becomes the HTML tag
-			if c.Class != "" {
-				contentBuilder.WriteString(` class="`)
-				contentBuilder.WriteString(template.HTMLEscapeString(c.Class))
-				contentBuilder.WriteString(`"`)
-			}
-			contentBuilder.WriteString(">")
-			contentBuilder.WriteString(template.HTMLEscapeString(c.Body)) // Add raw body content
-
-			// Handle children recursively
-			if len(c.Children) > 0 {
-				childContent, err := buildContentString(c.Children)
-				if err != nil {
-					return nil, err
-				}
-				contentBuilder.WriteString(childContent.String())
-			}
-
-			contentBuilder.WriteString("</")
-			contentBuilder.WriteString(c.Template)
-			contentBuilder.WriteString(">")
-
-		case "component": // Handle "component" items
-			// Marshal the map to JSON
-			rawJSON, err := json.Marshal(c.Data)
-			if err != nil {
-				return nil, err
-			}
-
-			// Minify the JSON
-			var minifiedJSON bytes.Buffer
-			err = json.Compact(&minifiedJSON, rawJSON)
-			if err != nil {
-				return nil, err
-			}
-
-			// Build the content for the component
-			contentBuilder.WriteString("\n<")
-			contentBuilder.WriteString(c.Template)
-			if c.Class != "" {
-				contentBuilder.WriteString(` class="`)
-				contentBuilder.WriteString(template.HTMLEscapeString(c.Class))
-				contentBuilder.WriteString(`"`)
-			}
-			contentBuilder.WriteString(` mimi-data='`)
-			contentBuilder.WriteString(template.HTMLEscapeString(minifiedJSON.String()))
-			contentBuilder.WriteString(`'>`)
-
-			// Handle children recursively
-			if len(c.Children) > 0 {
-				childContent, err := buildContentString(c.Children)
-				if err != nil {
-					return nil, err
-				}
-				contentBuilder.WriteString(childContent.String())
-			}
-
-			contentBuilder.WriteString(`</`)
-			contentBuilder.WriteString(c.Template)
-			contentBuilder.WriteString(">")
-
-		case "raw": // Handle "raw" items
-			// Add raw HTML directly, but escape it for safety
-			contentBuilder.WriteString(c.Body)
-
-		default: // Handle unsupported or unknown types
-			return nil, fmt.Errorf("unsupported content type: %s", c.Type)
+	// Extract SEO metadata
+	seo := make(map[string]string)
+	if rawSEO, ok := pageConfig["seo"].(map[string]interface{}); ok {
+		for key, value := range rawSEO {
+			seo[key] = fmt.Sprintf("%v", value)
 		}
 	}
 
-	return &contentBuilder, nil
+	return pageConfig, seo, nil
 }
-
-// escapeJSON ensures that JSON is safe for embedding in HTML attributes
-func escapeJSON(input string) (string, error) {
-	// Parse the input as JSON to ensure it's valid
-	var parsed interface{}
-	err := json.Unmarshal([]byte(input), &parsed)
-	if err != nil {
-		return "", err
-	}
-
-	// Marshal it back to a string, escaping special HTML characters
-	escaped, err := json.Marshal(parsed)
-	if err != nil {
-		return "", err
-	}
-
-	// Convert JSON bytes to a string and ensure it's HTML-safe
-	return template.HTMLEscapeString(string(escaped)), nil
-}
-
-// TODO: we will have 3 data types: resources, fragments and meta. Fragments should be wrapped in a div, span or section.
-// fragments are just reuable templates that are meant to be set once and carry over all the pages (central editing of headers and footer)
