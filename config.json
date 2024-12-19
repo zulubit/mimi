@@ -1,0 +1,17 @@
+{
+	"settings": {
+		"dateFormat": "YYYY-MM-DD",
+		"paginationLimit": 10,
+		"language": "en"
+	},
+	"seo": {
+		"title": "Example Site",
+		"global": [
+			"<meta name='author' content='John Doe' />"
+		]
+	},
+	"inserts": {
+		"head": [],
+		"endOfBody": []
+	}
+}

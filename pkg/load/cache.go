@@ -5,6 +5,8 @@ import (
 	"github.com/zulubit/mimi/pkg/validate"
 )
 
+// TODO: cache is now not a thing, we need to recache all the page configs and redo the functions that take it in
+
 type ResoruceMap *[]read.Resource
 
 var config *read.Config
@@ -12,7 +14,7 @@ var resources ResoruceMap
 
 func BuildConfigCache() error {
 
-	rc, err := read.ReadConfig("./sitedata/config.json")
+	rc, err := read.ReadConfig()
 	if err != nil {
 		return err
 	}
@@ -34,7 +36,7 @@ func GetConfig() (*read.Config, error) {
 	return config, nil
 }
 
-func BuildResourceCache() error {
+func BuildPageCache() error {
 
 	rc, err := read.ReadResources("./sitedata/resources")
 	if err != nil {
@@ -53,7 +55,7 @@ func BuildResourceCache() error {
 
 func GetResources() (ResoruceMap, error) {
 	if resources == nil {
-		err := BuildResourceCache()
+		err := BuildPageCache()
 		if err != nil {
 			return nil, err
 		}

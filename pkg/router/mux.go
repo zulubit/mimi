@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/zulubit/mimi/pkg/admin"
 	"github.com/zulubit/mimi/pkg/handle"
 	"github.com/zulubit/mimi/pkg/load"
 )
@@ -18,6 +19,10 @@ func SetupRouter() *mux.Router {
 
 	// API v1 routes
 	api := r.PathPrefix("/api/v1").Subrouter()
+	ad := r.PathPrefix("/mimi-admin").Subrouter()
+
+	ad.HandleFunc("/", admin.ServeAdminHome)
+	ad.HandleFunc("/editor", admin.ServeAdminDashboard)
 
 	// Health check route
 	api.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {

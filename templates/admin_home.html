@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Admin Home</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+		}
+
+		header {
+			background-color: yellow;
+			color: brown;
+			padding: 10px;
+			text-align: center;
+		}
+
+		main {
+			padding: 20px;
+		}
+
+		h1 {
+			text-align: center;
+			color: brown;
+		}
+
+		.page-list {
+			margin: 20px auto;
+			max-width: 600px;
+			border: 1px solid #ddd;
+			border-radius: 5px;
+			overflow: hidden;
+		}
+
+		.page-list-item {
+			display: flex;
+			justify-content: space-between;
+			padding: 10px;
+			border-bottom: 1px solid #ddd;
+		}
+
+		.page-list-item:last-child {
+			border-bottom: none;
+		}
+
+		.page-name {
+			font-weight: bold;
+		}
+
+		.page-actions a {
+			text-decoration: none;
+			color: white;
+			background-color: brown;
+			padding: 5px 10px;
+			border-radius: 5px;
+		}
+	</style>
+</head>
+
+<body>
+	<header>
+		<h1>Admin Home</h1>
+	</header>
+	<main>
+		<h1>Manage Pages</h1>
+		<div class="page-list">
+			{{range .}}
+			<div class="page-list-item">
+				<div class="page-name">{{.Name}}</div>
+				<div class="page-actions">
+					<a href="/mimi-admin/editor?name={{.Name}}">Go to Editor</a>
+				</div>
+			</div>
+			{{end}}
+		</div>
+	</main>
+</body>
+
+</html>
