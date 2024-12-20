@@ -6,6 +6,7 @@
 	},
 	"seo": {
 		"title": "MySite",
+		"description": "A site",
 		"global": [
 			"<meta name='asdf'/>"
 		]

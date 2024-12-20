@@ -7,7 +7,7 @@ import (
 	"github.com/zulubit/mimi/pkg/read"
 )
 
-func ValidateRoutes(resources *[]read.Resource) error {
+func ValidateRoutes(resources *[]read.Page) error {
 	routeMap := make(map[string]bool)
 	for _, r := range *resources {
 		// Check if the route starts with "/"

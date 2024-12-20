@@ -1,17 +1,15 @@
 <!DOCTYPE html>
-<html lang="{{.globalConfig.Settings.Language}}">
+<html lang="{{.GlobalConfig.Settings.Language}}">
 
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>{{.seo.title}}</title>
-	<meta name="description" content="{{.seo.description}}">
-	<meta name="author" content="{{.Data.author}}">
+	<title>{{.GlobalConfig.SEO.Title}}</title>
 </head>
 
 <body>
 	<main>
-		{{.RenderedContent}}
+		{{.Content}}
 	</main>
 </body>
 

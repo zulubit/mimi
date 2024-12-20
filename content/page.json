@@ -2,6 +2,7 @@
 	"route": "/",
 	"type": "page",
 	"name": "home",
+	"class": "asdf",
 	"markdown": "content/page.md",
 	"layout": "templates/layout.html",
 	"template": "content/page.template.html",

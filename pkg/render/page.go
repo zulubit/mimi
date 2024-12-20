@@ -2,141 +2,99 @@ package render
 
 import (
 	"bytes"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
-	"os"
-	"strings"
 
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark-meta"
+	"github.com/yuin/goldmark/parser"
+	"github.com/zulubit/mimi/pkg/load"
 	"github.com/zulubit/mimi/pkg/read"
-	"gopkg.in/yaml.v3"
 )
 
-// Page represents the parsed content and frontmatter of a Markdown file
-type Page struct {
-	Content template.HTML          // Rendered Markdown content
-	Data    map[string]interface{} // Frontmatter fields as key-value pairs
+type PageData struct {
+	Content      template.HTML
+	Data         map[string]interface{}
+	GlobalConfig read.Config
 }
 
-func RenderPage(pageConfigPath string, globalConfig *read.Config) (string, error) {
-	// Load and parse the page configuration
-	pageConfig, seo, err := loadPageConfig(pageConfigPath)
+func RenderPage(route string) (string, error) {
+	pages, err := load.GetPages()
 	if err != nil {
-		return "", fmt.Errorf("Error loading page configuration: %w", err)
+		return "", err
 	}
 
-	// Extract paths from the page configuration
-	markdownPath, ok := pageConfig["markdown"].(string)
+	mp, ok := pages[route]
 	if !ok {
-		return "", fmt.Errorf("'markdown' field missing or invalid in page config")
-	}
-	layoutPath, ok := pageConfig["layout"].(string)
-	if !ok {
-		return "", fmt.Errorf("'layout' field missing or invalid in page config")
-	}
-	templatePath, ok := pageConfig["template"].(string)
-	if !ok {
-		return "", fmt.Errorf("'template' field missing or invalid in page config")
+		return "", errors.New("page not found in cache")
 	}
 
 	// Parse the Markdown file
-	page, err := parseMarkdown(markdownPath)
+	pageContent, meta, err := parseMarkdown(mp.Markdown)
 	if err != nil {
 		return "", fmt.Errorf("Error parsing Markdown file: %w", err)
 	}
 
-	// Parse the page-specific template
-	pageTemplate, err := template.ParseFiles(templatePath)
+	gc, err := load.GetConfig()
+	if err != nil {
+		return "", fmt.Errorf("Error reading global config: %w", err)
+	}
+
+	// Prepare data for the page-specific template
+	pageData := PageData{
+		Content:      template.HTML(pageContent),
+		Data:         meta,
+		GlobalConfig: *gc,
+	}
+
+	// Render the page-specific template
+	pageTemplate, err := template.New("page").Parse(string(mp.Template))
 	if err != nil {
 		return "", fmt.Errorf("Error loading page template: %w", err)
 	}
 
-	// Render the page content
-	var pageContent bytes.Buffer
-	err = pageTemplate.Execute(&pageContent, page)
+	var pageBuffer bytes.Buffer
+	err = pageTemplate.Execute(&pageBuffer, pageData)
 	if err != nil {
-		return "", fmt.Errorf("Error rendering page content: %w", err)
+		return "", fmt.Errorf("Error rendering page-specific template: %w", err)
 	}
 
-	// Embed rendered content into the page data
-	page.Data["RenderedContent"] = template.HTML(pageContent.String())
-	page.Data["seo"] = seo
-	page.Data["globalConfig"] = globalConfig // Add global config to the page data
-
-	// Parse the layout template
-	layoutTemplate, err := template.ParseFiles(layoutPath)
+	// Retrieve the cached layout template
+	layoutTemplate, err := load.GetLayoutTemplate()
 	if err != nil {
-		return "", fmt.Errorf("Error loading layout template: %w", err)
+		return "", fmt.Errorf("Error retrieving layout template: %w", err)
 	}
 
-	// Render the final page with layout
+	// Render the final page using the layout template
+	layoutData := PageData{
+		Content:      template.HTML(pageBuffer.String()),
+		Data:         meta,
+		GlobalConfig: *gc,
+	}
+
 	var renderedPage bytes.Buffer
-	err = layoutTemplate.Execute(&renderedPage, page.Data)
+	err = layoutTemplate.Execute(&renderedPage, layoutData)
 	if err != nil {
-		return "", fmt.Errorf("Error rendering final page: %w", err)
+		return "", fmt.Errorf("Error rendering final page with layout: %w", err)
 	}
 
 	return renderedPage.String(), nil
 }
 
 // parseMarkdown reads and parses a Markdown file into a Page struct
-func parseMarkdown(markdownPath string) (Page, error) {
-	var page Page
-
-	// Read the Markdown file
-	content, err := os.ReadFile(markdownPath)
-	if err != nil {
-		return page, fmt.Errorf("failed to read Markdown file: %w", err)
-	}
-
-	// Split frontmatter and body
-	parts := strings.SplitN(string(content), "---", 3)
-	if len(parts) < 3 {
-		return page, fmt.Errorf("invalid Markdown format in file: %s", markdownPath)
-	}
-
-	// Parse frontmatter into Data
-	var frontmatter map[string]interface{}
-	err = yaml.Unmarshal([]byte(parts[1]), &frontmatter)
-	if err != nil {
-		return page, fmt.Errorf("failed to parse frontmatter: %w", err)
-	}
-	page.Data = frontmatter
+func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, error) {
+	prsr := goldmark.New(goldmark.WithExtensions(meta.Meta))
 
 	// Convert Markdown body to HTML
 	var buf bytes.Buffer
-	err = goldmark.New().Convert([]byte(parts[2]), &buf)
+	context := parser.NewContext()
+	err := prsr.Convert([]byte(markdown), &buf, parser.WithContext(context))
 	if err != nil {
-		return page, fmt.Errorf("failed to render Markdown to HTML: %w", err)
-	}
-	page.Content = template.HTML(buf.String()) // Mark as safe HTML
-
-	return page, nil
-}
-
-// loadPageConfig reads and parses the page's JSON configuration file
-func loadPageConfig(configPath string) (map[string]interface{}, map[string]string, error) {
-	// Read the JSON file
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load page config: %w", err)
+		return nil, nil, fmt.Errorf("failed to render Markdown to HTML: %w", err)
 	}
 
-	// Parse the JSON data
-	var pageConfig map[string]interface{}
-	err = json.Unmarshal(data, &pageConfig)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse page config: %w", err)
-	}
+	meta := meta.Get(context)
 
-	// Extract SEO metadata
-	seo := make(map[string]string)
-	if rawSEO, ok := pageConfig["seo"].(map[string]interface{}); ok {
-		for key, value := range rawSEO {
-			seo[key] = fmt.Sprintf("%v", value)
-		}
-	}
-
-	return pageConfig, seo, nil
+	return buf.Bytes(), meta, nil
 }
