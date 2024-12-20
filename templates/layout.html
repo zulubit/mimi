@@ -5,12 +5,14 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>{{.GlobalConfig.SEO.Title}}</title>
+	{{range .GlobalConfig.Inserts.Head}}{{.Script}}{{end}}
 </head>
 
 <body>
 	<main>
 		{{.Content}}
 	</main>
+	{{range .GlobalConfig.Inserts.EndOfBody}}{{.Script}}{{end}}
 </body>
 
 </html>
