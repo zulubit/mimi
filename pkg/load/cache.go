@@ -1,28 +1,32 @@
 package load
 
 import (
-	"html/template"
-
+	"bytes"
+	"fmt"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark-meta"
+	"github.com/yuin/goldmark/parser"
 	"github.com/zulubit/mimi/pkg/read"
 	"github.com/zulubit/mimi/pkg/validate"
+	"html/template"
 )
 
-// TODO: cache is now not a thing, we need to recache all the page configs and redo the functions that take it in
+// PageStack now holds the raw template, parsed template, markdown, and parsed metadata
+type PageStack struct {
+	Config   read.Page
+	Template []byte             // Raw template
+	Parsed   *template.Template // Precompiled template
+	Markdown []byte
+	Meta     map[string]interface{} // Parsed metadata
+}
+
+type PageCache map[string]PageStack
 
 var config *read.Config
 var pages PageCache
 var layoutTemplate *template.Template
 
-type PageStack struct {
-	Config   read.Page
-	Template []byte
-	Markdown []byte
-}
-
-type PageCache map[string]PageStack
-
 func BuildConfigCache() error {
-
 	rc, err := read.ReadConfig()
 	if err != nil {
 		return err
@@ -30,31 +34,27 @@ func BuildConfigCache() error {
 
 	config = rc
 
-	layout, err := template.ParseFiles("templates/layout.html")
+	// Load layout template
+	layout, err := template.ParseFiles("sitedata/theme/layout.html")
 	if err != nil {
 		return err
 	}
 	layoutTemplate = layout
 
 	return nil
-
-	return nil
 }
 
 func GetConfig() (*read.Config, error) {
-
 	if config == nil {
 		err := BuildConfigCache()
 		if err != nil {
 			return nil, err
 		}
 	}
-
 	return config, nil
 }
 
 func BuildPageCache() error {
-
 	rc, err := read.ReadResources("./content")
 	if err != nil {
 		return err
@@ -68,24 +68,39 @@ func BuildPageCache() error {
 	c := make(PageCache)
 
 	for _, p := range *rc {
+		// Read Markdown file
 		md, err := read.ReadMarkdown(p.Markdown)
 		if err != nil {
 			return err
 		}
 
+		// Parse the template
 		tp, err := read.ReadTemplate(p.Template)
+		if err != nil {
+			return err
+		}
+
+		// Parse Markdown and get metadata
+		content, meta, err := parseMarkdown(md)
+		if err != nil {
+			return err
+		}
+
+		// Precompile the template
+		parsedTemplate, err := template.New("page-" + p.Route).Parse(string(tp))
 		if err != nil {
 			return err
 		}
 
 		currStack := PageStack{
 			Config:   p,
-			Markdown: md,
 			Template: tp,
+			Parsed:   parsedTemplate,
+			Markdown: content,
+			Meta:     meta,
 		}
 
 		c[p.Route] = currStack
-
 	}
 
 	pages = c
@@ -100,7 +115,6 @@ func GetPages() (PageCache, error) {
 			return nil, err
 		}
 	}
-
 	return pages, nil
 }
 
@@ -112,4 +126,21 @@ func GetLayoutTemplate() (*template.Template, error) {
 		}
 	}
 	return layoutTemplate, nil
+}
+
+// parseMarkdown reads and parses a Markdown file into HTML and extracts metadata
+func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, error) {
+	prsr := goldmark.New(goldmark.WithExtensions(meta.Meta))
+
+	// Convert Markdown body to HTML
+	var buf bytes.Buffer
+	context := parser.NewContext()
+	err := prsr.Convert(markdown, &buf, parser.WithContext(context))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to render Markdown to HTML: %w", err)
+	}
+
+	meta := meta.Get(context)
+
+	return buf.Bytes(), meta, nil
 }

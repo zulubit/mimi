@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"html/template"
 
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark-meta"
-	"github.com/yuin/goldmark/parser"
 	"github.com/zulubit/mimi/pkg/load"
 	"github.com/zulubit/mimi/pkg/read"
 )
@@ -30,32 +27,21 @@ func RenderPage(route string) (string, error) {
 		return "", errors.New("page not found in cache")
 	}
 
-	// Parse the Markdown file
-	pageContent, meta, err := parseMarkdown(mp.Markdown)
-	if err != nil {
-		return "", fmt.Errorf("Error parsing Markdown file: %w", err)
-	}
-
 	gc, err := load.GetConfig()
 	if err != nil {
 		return "", fmt.Errorf("Error reading global config: %w", err)
 	}
 
-	// Prepare data for the page-specific template
+	// Use precompiled template and parsed markdown/meta
 	pageData := PageData{
-		Content:      template.HTML(pageContent),
-		Data:         meta,
-		GlobalConfig: *gc,
+		Content:      template.HTML(mp.Markdown), // Already parsed Markdown
+		Data:         mp.Meta,                    // Metadata
+		GlobalConfig: *gc,                        // Global config
 	}
 
-	// Render the page-specific template
-	pageTemplate, err := template.New("page").Parse(string(mp.Template))
-	if err != nil {
-		return "", fmt.Errorf("Error loading page template: %w", err)
-	}
-
+	// Render the page using the precompiled page-specific template
 	var pageBuffer bytes.Buffer
-	err = pageTemplate.Execute(&pageBuffer, pageData)
+	err = mp.Parsed.Execute(&pageBuffer, pageData)
 	if err != nil {
 		return "", fmt.Errorf("Error rendering page-specific template: %w", err)
 	}
@@ -69,7 +55,7 @@ func RenderPage(route string) (string, error) {
 	// Render the final page using the layout template
 	layoutData := PageData{
 		Content:      template.HTML(pageBuffer.String()),
-		Data:         meta,
+		Data:         mp.Meta,
 		GlobalConfig: *gc,
 	}
 
@@ -80,21 +66,4 @@ func RenderPage(route string) (string, error) {
 	}
 
 	return renderedPage.String(), nil
-}
-
-// parseMarkdown reads and parses a Markdown file into a Page struct
-func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, error) {
-	prsr := goldmark.New(goldmark.WithExtensions(meta.Meta))
-
-	// Convert Markdown body to HTML
-	var buf bytes.Buffer
-	context := parser.NewContext()
-	err := prsr.Convert([]byte(markdown), &buf, parser.WithContext(context))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to render Markdown to HTML: %w", err)
-	}
-
-	meta := meta.Get(context)
-
-	return buf.Bytes(), meta, nil
 }

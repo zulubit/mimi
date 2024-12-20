@@ -4,7 +4,7 @@
 	"name": "home",
 	"class": "asdf",
 	"markdown": "content/page.md",
-	"layout": "templates/layout.html",
+	"layout": "sitedata/theme/layout.html",
 	"template": "content/page.template.html",
 	"seo": {
 		"title": "Home Page",
