@@ -1,0 +1,69 @@
+/* Import the default PicoCSS styles */
+@import "../vendor/pico.sand.css";
+/* Replace this with the relative path to your PicoCSS file */
+
+/* Customize the default theme */
+:root {
+  /* Colors */
+  --primary: #4caf50;
+  /* Green primary color */
+  --secondary: #ff9800;
+  /* Orange secondary color */
+  --accent: #03a9f4;
+  /* Light blue accent color */
+  --background: #f8f9fa;
+  /* Light background */
+  --foreground: #212529;
+  /* Dark text */
+  --border: #e0e0e0;
+  /* Light borders */
+
+  /* Typography */
+  --font-family: "Roboto", sans-serif;
+  /* Custom font */
+  --font-size: 5rem;
+  /* Base font size */
+  --line-height: 5;
+  /* Line height */
+
+  /* Spacing */
+  --spacing: 1rem;
+  /* Base spacing unit */
+  --radius: 0.5rem;
+  /* Border radius */
+
+  /* Container */
+  --container-width: 80ch;
+  /* Max width for containers */
+  --container-padding: 1rem;
+
+  /* Buttons */
+  --button-padding: 0.75rem 1.5rem;
+  --button-radius: 0.5rem;
+
+  /* Forms */
+  --form-border: 1px solid var(--border);
+  --form-padding: 0.75rem;
+  --form-radius: 0.5rem;
+}
+
+/* Optional: Add dark mode customizations */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #212529;
+    /* Dark background */
+    --foreground: #f8f9fa;
+    /* Light text */
+    --border: #343a40;
+    /* Dark borders */
+  }
+}
+
+/* Custom Component Overrides (if needed) */
+.card {
+  padding: 1.5rem;
+  border: var(--form-border);
+  border-radius: var(--radius);
+  background: var(--background);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

@@ -13,27 +13,10 @@
 	"inserts": {
 		"head": [
 			{
-				"tag": "description-meta",
-				"script": "<meta name=\"description\" content=\"Custom description for the page\">"
-			},
-			{
-				"tag": "stylesheet",
-				"script": "<link rel=\"stylesheet\" href=\"https://example.com/styles.css\">"
-			},
-			{
-				"tag": "analytics-script",
-				"script": "<script src=\"https://example.com/head-script.js\" async></script>"
+				"tag": "custom-css",
+				"script": "<link rel=\"stylesheet\" href=\"/static/bundle.min.css\">"
 			}
 		],
-		"endOfBody": [
-			{
-				"tag": "footer-script",
-				"script": "<script src=\"https://example.com/footer-script.js\"></script>"
-			},
-			{
-				"tag": "custom-logger",
-				"script": "<script>console.log('Custom script at the end of body');</script>"
-			}
-		]
+		"endOfBody": []
 	}
 }
