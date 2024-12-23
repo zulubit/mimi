@@ -1,4 +1,5 @@
 {
+	"_comment": "This file is only loaded if no settings re present in the database",
 	"settings": {
 		"dateFormat": "YYYY-MM-DD",
 		"paginationLimit": 10,
