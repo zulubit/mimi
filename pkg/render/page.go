@@ -8,12 +8,14 @@ import (
 
 	"github.com/zulubit/mimi/pkg/load"
 	"github.com/zulubit/mimi/pkg/read"
+	"github.com/zulubit/mimi/pkg/seo"
 )
 
 type PageData struct {
 	Content      template.HTML
 	Data         map[string]interface{}
 	GlobalConfig read.Config
+	SEO          seo.SEO
 }
 
 func RenderPage(route string) (string, error) {
@@ -52,11 +54,14 @@ func RenderPage(route string) (string, error) {
 		return "", fmt.Errorf("Error retrieving layout template: %w", err)
 	}
 
+	finalSeo := seo.CombineSeo(gc.GlobalSEO, mp.Config.SEO)
+
 	// Render the final page using the layout template
 	layoutData := PageData{
 		Content:      template.HTML(pageBuffer.String()),
 		Data:         mp.Meta,
 		GlobalConfig: *gc,
+		SEO:          finalSeo,
 	}
 
 	var renderedPage bytes.Buffer

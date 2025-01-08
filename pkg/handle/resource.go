@@ -17,6 +17,8 @@ func GetResource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//TODO: find the right page or 404
+
 	// Write the rendered HTML
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)

@@ -5,26 +5,22 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/zulubit/mimi/pkg/seo"
 )
 
 // SEO defines the SEO-related fields
-type SEO struct {
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Keywords    []string `json:"keywords"`
-	Extra       []string `json:"extra"`
-}
 
 // Page defines the overall structure of a page
 type Page struct {
-	Route    string `json:"route"`
-	Class    string `json:"class"`
-	Name     string `json:"Name"`
-	Type     string `json:"type"`
-	SEO      SEO    `json:"seo"`
-	Markdown string `json:"markdown"`
-	Layout   string `json:"layout"`
-	Template string `json:"template"`
+	Route    string      `json:"route"`
+	Class    string      `json:"class"`
+	Name     string      `json:"Name"`
+	Type     string      `json:"type"`
+	SEO      seo.PageSEO `json:"seo"`
+	Markdown string      `json:"markdown"`
+	Layout   string      `json:"layout"`
+	Template string      `json:"template"`
 }
 
 func ReadResources(dirPath string) (*[]Page, error) {

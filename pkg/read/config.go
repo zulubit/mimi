@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"html/template"
 	"os"
+
+	"github.com/zulubit/mimi/pkg/seo"
 )
 
 // Config represents the application's configuration
@@ -13,11 +15,8 @@ type Config struct {
 		PaginationLimit int    `json:"paginationLimit"`
 		Language        string `json:"language"`
 	} `json:"settings"`
-	SEO struct {
-		Title  string          `json:"title"`
-		Global []template.HTML `json:"global"`
-	} `json:"seo"`
-	Inserts struct {
+	GlobalSEO seo.GlobalSEO `json:"seo"`
+	Inserts   struct {
 		Head      []Insert `json:"head"`
 		EndOfBody []Insert `json:"endOfBody"`
 	} `json:"inserts"`
