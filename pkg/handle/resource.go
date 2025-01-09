@@ -8,9 +8,9 @@ import (
 )
 
 func GetResource(w http.ResponseWriter, r *http.Request) {
-
+	path := r.URL.Path
 	// Render the page
-	renderedPage, err := render.RenderPage("/")
+	renderedPage, err := render.RenderPage(path)
 	if err != nil {
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		fmt.Printf("Error rendering page: %v\n", err)
