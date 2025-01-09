@@ -20,7 +20,9 @@ type PageStack struct {
 	Meta     map[string]interface{} // Parsed metadata
 }
 
-type PageCache map[string]PageStack
+type Route string
+
+type PageCache map[Route]PageStack
 
 var config *read.Config
 var pages PageCache
@@ -100,7 +102,7 @@ func BuildPageCache() error {
 			Meta:     meta,
 		}
 
-		c[p.Route] = currStack
+		c[Route(p.Route)] = currStack
 	}
 
 	pages = c

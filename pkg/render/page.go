@@ -24,7 +24,7 @@ func RenderPage(route string) (string, error) {
 		return "", err
 	}
 
-	mp, ok := pages[route]
+	mp, ok := pages[load.Route(route)]
 	if !ok {
 		return "", errors.New("page not found in cache")
 	}
