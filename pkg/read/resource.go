@@ -1,7 +1,6 @@
 package read
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -23,8 +22,8 @@ type Page struct {
 	Template string      `json:"template"`
 }
 
-func ReadResources(dirPath string) (*[]Page, error) {
-	var resources []Page
+func ReadResources(dirPath string) (*[][]byte, error) {
+	var rawMarkdowns [][]byte
 
 	// Walk through the directory and its subdirectories
 	err := filepath.WalkDir(dirPath, func(path string, d os.DirEntry, err error) error {
@@ -33,19 +32,14 @@ func ReadResources(dirPath string) (*[]Page, error) {
 		}
 		fmt.Println(path)
 		// Check if the current file is not a directory and has a .json extension
-		if !d.IsDir() && filepath.Ext(d.Name()) == ".json" {
+		if !d.IsDir() && filepath.Ext(d.Name()) == ".md" {
 
-			rawJSON, err := os.ReadFile(path)
+			rawMd, err := os.ReadFile(path)
 			if err != nil {
 				return fmt.Errorf("failed to read file %s: %v", path, err)
 			}
 
-			page, err := ParseResource(rawJSON)
-			if err != nil {
-				return fmt.Errorf("failed to parse file %s: %v", path, err)
-			}
-
-			resources = append(resources, *page)
+			rawMarkdowns = append(rawMarkdowns, rawMd)
 		}
 
 		return nil
@@ -55,27 +49,5 @@ func ReadResources(dirPath string) (*[]Page, error) {
 		return nil, err
 	}
 
-	return &resources, nil
-}
-
-// Parse parses the raw JSON and returns a Page struct or an error
-func ParseResource(rawJSON []byte) (*Page, error) {
-	var page Page
-	err := json.Unmarshal(rawJSON, &page)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse JSON: %v", err)
-	}
-
-	// Validate the page struct
-	if err := validateResource(&page); err != nil {
-		return nil, fmt.Errorf("validation failed: %v", err)
-	}
-
-	return &page, nil
-}
-
-// validateResource checks for required fields and other constraints
-func validateResource(page *Page) error {
-
-	return nil
+	return &rawMarkdowns, nil
 }

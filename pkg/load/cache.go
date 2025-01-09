@@ -3,12 +3,14 @@ package load
 import (
 	"bytes"
 	"fmt"
+	"html/template"
+
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/parser"
 	"github.com/zulubit/mimi/pkg/read"
+	"github.com/zulubit/mimi/pkg/seo"
 	"github.com/zulubit/mimi/pkg/validate"
-	"html/template"
 )
 
 // PageStack now holds the raw template, parsed template, markdown, and parsed metadata
@@ -62,49 +64,57 @@ func BuildPageCache() error {
 		return err
 	}
 
-	err = validate.ValidateRoutes(rc)
-	if err != nil {
-		return err
-	}
-
 	c := make(PageCache)
+	var pcc []read.Page
+	seenRoutes := make(map[string]struct{}) // Track seen routes to detect conflicts
 
 	for _, p := range *rc {
-		// Read Markdown file
-		md, err := read.ReadMarkdown(p.Markdown)
+		// Parse Markdown and get metadata
+		content, meta, pageConfig, err := parseMarkdown(p)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to parse Markdown: %w", err)
 		}
+
+		// Check for route conflicts
+		if _, exists := seenRoutes[pageConfig.Route]; exists {
+			return fmt.Errorf("route conflict detected: %q is defined multiple times", pageConfig.Route)
+		}
+		seenRoutes[pageConfig.Route] = struct{}{}
+
+		// Append the page configuration for later validation
+		pcc = append(pcc, *pageConfig)
 
 		// Parse the template
-		tp, err := read.ReadTemplate(p.Template)
+		tp, err := read.ReadTemplate(pageConfig.Template)
 		if err != nil {
-			return err
-		}
-
-		// Parse Markdown and get metadata
-		content, meta, err := parseMarkdown(md)
-		if err != nil {
-			return err
+			return fmt.Errorf("failed to read template %q: %w", pageConfig.Template, err)
 		}
 
 		// Precompile the template
-		parsedTemplate, err := template.New("page-" + p.Route).Parse(string(tp))
+		parsedTemplate, err := template.New("page-" + pageConfig.Route).Parse(string(tp))
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to parse template for route %q: %w", pageConfig.Route, err)
 		}
 
+		// Build the PageStack
 		currStack := PageStack{
-			Config:   p,
+			Config:   *pageConfig,
 			Template: tp,
 			Parsed:   parsedTemplate,
 			Markdown: content,
 			Meta:     meta,
 		}
 
-		c[Route(p.Route)] = currStack
+		c[Route(pageConfig.Route)] = currStack
 	}
 
+	// Validate routes post-build for possible conflicts
+	err = validate.ValidateRoutes(&pcc)
+	if err != nil {
+		return fmt.Errorf("route validation failed: %w", err)
+	}
+
+	// Set the global page cache
 	pages = c
 
 	return nil
@@ -131,7 +141,7 @@ func GetLayoutTemplate() (*template.Template, error) {
 }
 
 // parseMarkdown reads and parses a Markdown file into HTML and extracts metadata
-func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, error) {
+func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, *read.Page, error) {
 	prsr := goldmark.New(goldmark.WithExtensions(meta.Meta))
 
 	// Convert Markdown body to HTML
@@ -139,10 +149,79 @@ func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, error) {
 	context := parser.NewContext()
 	err := prsr.Convert(markdown, &buf, parser.WithContext(context))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to render Markdown to HTML: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to render Markdown to HTML: %w", err)
 	}
 
-	meta := meta.Get(context)
+	metaData := meta.Get(context)
 
-	return buf.Bytes(), meta, nil
+	// Define required keys for Page
+	requiredKeys := map[string]*string{
+		"MIMIroute":    new(string),
+		"MIMIclasses":  new(string),
+		"MIMItype":     new(string),
+		"MIMIlayout":   new(string),
+		"MIMItemplate": new(string),
+	}
+
+	// Define SEO keys for PageSEO
+	seoKeys := map[string]*string{
+		"MIMItitle":       new(string),
+		"MIMIdescription": new(string),
+	}
+
+	// Extract metadata values for Page
+	for key, ptr := range requiredKeys {
+		if val, ok := metaData[key].(string); ok {
+			*ptr = val
+		} else {
+			*ptr = "" // Default to empty string if missing
+		}
+	}
+
+	// Extract metadata values for SEO
+	for key, ptr := range seoKeys {
+		if val, ok := metaData[key].(string); ok {
+			*ptr = val
+		} else {
+			*ptr = "" // Default to empty string if missing
+		}
+	}
+
+	// Extract Keywords for SEO
+	var keywords []string
+	if kw, ok := metaData["MIMIkeywords"].([]interface{}); ok {
+		for _, v := range kw {
+			if str, ok := v.(string); ok {
+				keywords = append(keywords, str)
+			}
+		}
+	}
+
+	// Extract ExtraSEO as []template.HTML
+	var extraSEO []template.HTML
+	if ex, ok := metaData["MIMIextraseo"].([]interface{}); ok {
+		for _, v := range ex {
+			if str, ok := v.(string); ok {
+				extraSEO = append(extraSEO, template.HTML(str))
+			}
+		}
+	}
+
+	// Populate the Page struct
+	page := &read.Page{
+		Route:    *requiredKeys["MIMIroute"],
+		Class:    *requiredKeys["MIMIclasses"],
+		Type:     *requiredKeys["MIMItype"],
+		Layout:   *requiredKeys["MIMIlayout"],
+		Template: *requiredKeys["MIMItemplate"],
+		Markdown: string(markdown),
+		SEO: seo.PageSEO{
+			Title:       *seoKeys["MIMItitle"],
+			Description: *seoKeys["MIMIdescription"],
+			Keywords:    keywords,
+			Extra:       extraSEO,
+		},
+	}
+
+	return buf.Bytes(), metaData, page, nil
 }
