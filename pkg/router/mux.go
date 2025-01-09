@@ -18,11 +18,30 @@ func SetupRouter() *mux.Router {
 	r.StrictSlash(true)
 
 	// API v1 routes
-	api := r.PathPrefix("/api/v1").Subrouter()
+	api := r.PathPrefix("/mimi-api/v1").Subrouter()
 	ad := r.PathPrefix("/mimi-admin").Subrouter()
+	services := r.PathPrefix("/mimi-services").Subrouter()
 
 	ad.HandleFunc("/", admin.ServeAdminHome)
 	ad.HandleFunc("/editor", admin.ServeAdminDashboard)
+
+	services.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		location := map[string]string{
+			"location": "services",
+		}
+		json.NewEncoder(w).Encode(location)
+	}).Methods("GET")
+
+	// Build route to trigger JavaScript bundling
+	services.HandleFunc("/build", func(w http.ResponseWriter, r *http.Request) {
+		err := load.BuildInternals()
+		if err != nil {
+			http.Error(w, "Build failed: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Build successful."))
+	}).Methods("GET")
 
 	// Health check route
 	api.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -31,17 +50,6 @@ func SetupRouter() *mux.Router {
 			"db":     "connected",
 		}
 		json.NewEncoder(w).Encode(health)
-	}).Methods("GET")
-
-	// Build route to trigger JavaScript bundling
-	api.HandleFunc("/build", func(w http.ResponseWriter, r *http.Request) {
-		err := load.BuildInternals()
-		if err != nil {
-			http.Error(w, "Build failed: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Build successful."))
 	}).Methods("GET")
 
 	// Serve static files

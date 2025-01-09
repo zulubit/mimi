@@ -20,8 +20,8 @@ func ValidateRoutes(resources *[]read.Page) error {
 			return errors.New("duplicate route")
 		}
 
-		if strings.HasPrefix(r.Route, "/api/v") || strings.HasPrefix(r.Route, "/mimi-admin") {
-			return errors.New("route collides with api/v1(2,3) or /mimi-admin/ routes")
+		if strings.HasPrefix(r.Route, "/mimi-api/v") || strings.HasPrefix(r.Route, "/mimi-admin") || strings.HasPrefix(r.Route, "/mimi-services") {
+			return errors.New("route collides with api/v1(2,3) or /mimi-admin/ or /mimi-services routes")
 		}
 
 		routeMap[r.Route] = true
