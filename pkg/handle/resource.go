@@ -12,6 +12,21 @@ func GetResource(w http.ResponseWriter, r *http.Request) {
 	// Render the page
 	renderedPage, err := render.RenderPage(path)
 	if err != nil {
+		if err.Error() == "page not found in cache" {
+			notFoundPage, err := render.RenderPage("/404")
+			if err != nil {
+				http.Error(w, "Error page not found", http.StatusInternalServerError)
+				fmt.Printf("Error page not found: %v\n", err)
+
+				return
+			}
+
+			w.Header().Set("Content-Type", "text/html")
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(notFoundPage))
+			return
+		}
+
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		fmt.Printf("Error rendering page: %v\n", err)
 		return

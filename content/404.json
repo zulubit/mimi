@@ -1,0 +1,13 @@
+{
+  "route": "/404",
+  "type": "page",
+  "name": "404 - not found",
+  "class": "asdf",
+  "markdown": "content/404.md",
+  "layout": "sitedata/theme/layout.html",
+  "template": "content/page.template.html",
+  "seo": {
+    "title": "404 - not found",
+    "description": "Page not found."
+  }
+}
