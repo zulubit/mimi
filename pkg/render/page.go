@@ -11,6 +11,8 @@ import (
 	"github.com/zulubit/mimi/pkg/seo"
 )
 
+type PageNotFound bool
+
 type PageData struct {
 	Content      template.HTML
 	Data         map[string]interface{}
@@ -18,20 +20,20 @@ type PageData struct {
 	SEO          seo.SEO
 }
 
-func RenderPage(route string) (string, error) {
+func RenderPage(route string) (string, PageNotFound, error) {
 	pages, err := load.GetPages()
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	mp, ok := pages[load.Route(route)]
 	if !ok {
-		return "", errors.New("page not found in cache")
+		return "", true, errors.New("page not found in cache")
 	}
 
 	gc, err := load.GetConfig()
 	if err != nil {
-		return "", fmt.Errorf("Error reading global config: %w", err)
+		return "", false, fmt.Errorf("Error reading global config: %w", err)
 	}
 
 	// Use precompiled template and parsed markdown/meta
@@ -45,13 +47,13 @@ func RenderPage(route string) (string, error) {
 	var pageBuffer bytes.Buffer
 	err = mp.Parsed.Execute(&pageBuffer, pageData)
 	if err != nil {
-		return "", fmt.Errorf("Error rendering page-specific template: %w", err)
+		return "", false, fmt.Errorf("Error rendering page-specific template: %w", err)
 	}
 
 	// Retrieve the cached layout template
 	layoutTemplate, err := load.GetLayoutTemplate()
 	if err != nil {
-		return "", fmt.Errorf("Error retrieving layout template: %w", err)
+		return "", false, fmt.Errorf("Error retrieving layout template: %w", err)
 	}
 
 	finalSeo := seo.CombineSeo(gc.GlobalSEO, mp.Config.SEO)
@@ -67,8 +69,8 @@ func RenderPage(route string) (string, error) {
 	var renderedPage bytes.Buffer
 	err = layoutTemplate.Execute(&renderedPage, layoutData)
 	if err != nil {
-		return "", fmt.Errorf("Error rendering final page with layout: %w", err)
+		return "", false, fmt.Errorf("Error rendering final page with layout: %w", err)
 	}
 
-	return renderedPage.String(), nil
+	return renderedPage.String(), false, nil
 }

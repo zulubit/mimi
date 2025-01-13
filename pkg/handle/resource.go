@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -9,15 +10,26 @@ import (
 
 func GetResource(w http.ResponseWriter, r *http.Request) {
 
-	// Render the page
-	renderedPage, err := render.RenderPage("/")
+	route := r.URL.Path
+
+	renderedPage, notFound, err := render.RenderPage(route)
+
+	if notFound {
+		health := map[string]string{
+			"error": "not found",
+		}
+
+		w.WriteHeader(http.StatusNotFound)
+
+		json.NewEncoder(w).Encode(health)
+		return
+	}
+
 	if err != nil {
 		http.Error(w, "Error rendering page", http.StatusInternalServerError)
 		fmt.Printf("Error rendering page: %v\n", err)
 		return
 	}
-
-	//TODO: find the right page or 404
 
 	// Write the rendered HTML
 	w.Header().Set("Content-Type", "text/html")
