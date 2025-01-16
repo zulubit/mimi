@@ -1,10 +1,10 @@
 ---
-MIMIroute: "/"
-MIMItype: "page"
-MIMItitle: "Welcome asdf"
-MIMIdescription: "This is the home page."
-MIMIlayout: "sitedata/theme/layout.html"
-MIMItemplate: "sitedata/theme/templates/page.template.html"
+mimi-route: "/"
+mimi-type: "page"
+mimi-title: "Welcome asdf"
+mimi-description: "This is the home page."
+mimi-layout: "sitedata/theme/layout.html"
+mimi-template: "sitedata/theme/templates/page.template.html"
 
 description: "This is an example page rendered from Markdown."
 author: "John Doe"

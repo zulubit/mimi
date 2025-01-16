@@ -156,17 +156,17 @@ func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, *read.Page,
 
 	// Define required keys for Page
 	requiredKeys := map[string]*string{
-		"MIMIroute":    new(string),
-		"MIMIclasses":  new(string),
-		"MIMItype":     new(string),
-		"MIMIlayout":   new(string),
-		"MIMItemplate": new(string),
+		"mimi-route":    new(string),
+		"mimi-classes":  new(string),
+		"mimi-type":     new(string),
+		"mimi-layout":   new(string),
+		"mimi-template": new(string),
 	}
 
 	// Define SEO keys for PageSEO
 	seoKeys := map[string]*string{
-		"MIMItitle":       new(string),
-		"MIMIdescription": new(string),
+		"mimi-title":       new(string),
+		"mimi-description": new(string),
 	}
 
 	// Extract metadata values for Page
@@ -189,7 +189,7 @@ func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, *read.Page,
 
 	// Extract Keywords for SEO
 	var keywords []string
-	if kw, ok := metaData["MIMIkeywords"].([]interface{}); ok {
+	if kw, ok := metaData["mimi-keywords"].([]interface{}); ok {
 		for _, v := range kw {
 			if str, ok := v.(string); ok {
 				keywords = append(keywords, str)
@@ -199,7 +199,7 @@ func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, *read.Page,
 
 	// Extract ExtraSEO as []template.HTML
 	var extraSEO []template.HTML
-	if ex, ok := metaData["MIMIextraseo"].([]interface{}); ok {
+	if ex, ok := metaData["mimi-extraseo"].([]interface{}); ok {
 		for _, v := range ex {
 			if str, ok := v.(string); ok {
 				extraSEO = append(extraSEO, template.HTML(str))
@@ -209,15 +209,15 @@ func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, *read.Page,
 
 	// Populate the Page struct
 	page := &read.Page{
-		Route:    *requiredKeys["MIMIroute"],
-		Class:    *requiredKeys["MIMIclasses"],
-		Type:     *requiredKeys["MIMItype"],
-		Layout:   *requiredKeys["MIMIlayout"],
-		Template: *requiredKeys["MIMItemplate"],
+		Route:    *requiredKeys["mimi-route"],
+		Class:    *requiredKeys["mimi-classes"],
+		Type:     *requiredKeys["mimi-type"],
+		Layout:   *requiredKeys["mimi-layout"],
+		Template: *requiredKeys["mimi-template"],
 		Markdown: string(markdown),
 		SEO: seo.PageSEO{
-			Title:       *seoKeys["MIMItitle"],
-			Description: *seoKeys["MIMIdescription"],
+			Title:       *seoKeys["mimi-title"],
+			Description: *seoKeys["mimi-description"],
 			Keywords:    keywords,
 			Extra:       extraSEO,
 		},
