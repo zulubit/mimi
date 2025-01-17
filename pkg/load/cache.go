@@ -1,25 +1,40 @@
 package load
 
 import (
-	"bytes"
 	"fmt"
 	"html/template"
 
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark-meta"
-	"github.com/yuin/goldmark/parser"
 	"github.com/zulubit/mimi/pkg/read"
 	"github.com/zulubit/mimi/pkg/seo"
-	"github.com/zulubit/mimi/pkg/validate"
+	"gopkg.in/yaml.v3"
 )
 
 // PageStack now holds the raw template, parsed template, markdown, and parsed metadata
 type PageStack struct {
-	Config   read.Page
-	Template []byte             // Raw template
+	PageData PageData
 	Parsed   *template.Template // Precompiled template
-	Markdown []byte
-	Meta     map[string]interface{} // Parsed metadata
+	Seo      seo.SEO
+}
+
+type Mimi struct {
+	Route       string `yaml:"route"`
+	Type        string `yaml:"type"`
+	Title       string `yaml:"title"`
+	Description string `yaml:"description"`
+	Layout      string `yaml:"layout"`
+	Template    string `yaml:"template"`
+}
+
+type SEO struct {
+	Title       string `yaml:"title"`
+	Description string `yaml:"description"`
+}
+
+// Combine known structs and a flexible map for unknown fields
+type PageData struct {
+	Mimi Mimi                   `yaml:"mimi"`
+	SEO  SEO                    `yaml:"seo"`
+	Meta map[string]interface{} `yaml:"meta"` // Catch-all for other fields
 }
 
 type Route string
@@ -65,53 +80,46 @@ func BuildPageCache() error {
 	}
 
 	c := make(PageCache)
-	var pcc []read.Page
+	var pcc []PageData
 	seenRoutes := make(map[string]struct{}) // Track seen routes to detect conflicts
 
 	for _, p := range *rc {
 		// Parse Markdown and get metadata
-		content, meta, pageConfig, err := parseMarkdown(p)
+		pd, err := parseYaml(p)
 		if err != nil {
 			return fmt.Errorf("failed to parse Markdown: %w", err)
 		}
 
 		// Check for route conflicts
-		if _, exists := seenRoutes[pageConfig.Route]; exists {
-			return fmt.Errorf("route conflict detected: %q is defined multiple times", pageConfig.Route)
+		if _, exists := seenRoutes[pd.Mimi.Route]; exists {
+			return fmt.Errorf("route conflict detected: %q is defined multiple times", pd.Mimi.Route)
 		}
-		seenRoutes[pageConfig.Route] = struct{}{}
+		seenRoutes[pd.Mimi.Route] = struct{}{}
 
 		// Append the page configuration for later validation
-		pcc = append(pcc, *pageConfig)
+		pcc = append(pcc, *pd)
 
 		// Parse the template
-		tp, err := read.ReadTemplate(pageConfig.Template)
+		tp, err := read.ReadTemplate(pd.Mimi.Template)
 		if err != nil {
-			return fmt.Errorf("failed to read template %q: %w", pageConfig.Template, err)
+			return fmt.Errorf("failed to read template %q: %w", pd.Mimi.Template, err)
 		}
 
 		// Precompile the template
-		parsedTemplate, err := template.New("page-" + pageConfig.Route).Parse(string(tp))
+		parsedTemplate, err := template.New("page-" + pd.Mimi.Route).Parse(string(tp))
 		if err != nil {
-			return fmt.Errorf("failed to parse template for route %q: %w", pageConfig.Route, err)
+			return fmt.Errorf("failed to parse template for route %q: %w", pd.Mimi.Route, err)
 		}
+
+		// TODO: merge seo
 
 		// Build the PageStack
 		currStack := PageStack{
-			Config:   *pageConfig,
-			Template: tp,
+			PageData: *pd,
 			Parsed:   parsedTemplate,
-			Markdown: content,
-			Meta:     meta,
 		}
 
-		c[Route(pageConfig.Route)] = currStack
-	}
-
-	// Validate routes post-build for possible conflicts
-	err = validate.ValidateRoutes(&pcc)
-	if err != nil {
-		return fmt.Errorf("route validation failed: %w", err)
+		c[Route(pd.Mimi.Route)] = currStack
 	}
 
 	// Set the global page cache
@@ -140,88 +148,11 @@ func GetLayoutTemplate() (*template.Template, error) {
 	return layoutTemplate, nil
 }
 
-// parseMarkdown reads and parses a Markdown file into HTML and extracts metadata
-func parseMarkdown(markdown []byte) ([]byte, map[string]interface{}, *read.Page, error) {
-	prsr := goldmark.New(goldmark.WithExtensions(meta.Meta))
-
-	// Convert Markdown body to HTML
-	var buf bytes.Buffer
-	context := parser.NewContext()
-	err := prsr.Convert(markdown, &buf, parser.WithContext(context))
+func parseYaml(p []byte) (*PageData, error) {
+	var data PageData
+	err := yaml.Unmarshal(p, &data)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed to render Markdown to HTML: %w", err)
+		return nil, fmt.Errorf("failed to parse YAML: %w", err)
 	}
-
-	metaData := meta.Get(context)
-
-	// Define required keys for Page
-	requiredKeys := map[string]*string{
-		"mimi-route":    new(string),
-		"mimi-classes":  new(string),
-		"mimi-type":     new(string),
-		"mimi-layout":   new(string),
-		"mimi-template": new(string),
-	}
-
-	// Define SEO keys for PageSEO
-	seoKeys := map[string]*string{
-		"mimi-title":       new(string),
-		"mimi-description": new(string),
-	}
-
-	// Extract metadata values for Page
-	for key, ptr := range requiredKeys {
-		if val, ok := metaData[key].(string); ok {
-			*ptr = val
-		} else {
-			*ptr = "" // Default to empty string if missing
-		}
-	}
-
-	// Extract metadata values for SEO
-	for key, ptr := range seoKeys {
-		if val, ok := metaData[key].(string); ok {
-			*ptr = val
-		} else {
-			*ptr = "" // Default to empty string if missing
-		}
-	}
-
-	// Extract Keywords for SEO
-	var keywords []string
-	if kw, ok := metaData["mimi-keywords"].([]interface{}); ok {
-		for _, v := range kw {
-			if str, ok := v.(string); ok {
-				keywords = append(keywords, str)
-			}
-		}
-	}
-
-	// Extract ExtraSEO as []template.HTML
-	var extraSEO []template.HTML
-	if ex, ok := metaData["mimi-extraseo"].([]interface{}); ok {
-		for _, v := range ex {
-			if str, ok := v.(string); ok {
-				extraSEO = append(extraSEO, template.HTML(str))
-			}
-		}
-	}
-
-	// Populate the Page struct
-	page := &read.Page{
-		Route:    *requiredKeys["mimi-route"],
-		Class:    *requiredKeys["mimi-classes"],
-		Type:     *requiredKeys["mimi-type"],
-		Layout:   *requiredKeys["mimi-layout"],
-		Template: *requiredKeys["mimi-template"],
-		Markdown: string(markdown),
-		SEO: seo.PageSEO{
-			Title:       *seoKeys["mimi-title"],
-			Description: *seoKeys["mimi-description"],
-			Keywords:    keywords,
-			Extra:       extraSEO,
-		},
-	}
-
-	return buf.Bytes(), metaData, page, nil
+	return &data, nil
 }

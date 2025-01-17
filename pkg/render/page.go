@@ -15,7 +15,7 @@ type PageNotFound bool
 
 type PageData struct {
 	Content      template.HTML
-	Data         map[string]interface{}
+	Data         interface{}
 	GlobalConfig read.Config
 	SEO          seo.SEO
 }
@@ -36,16 +36,9 @@ func RenderPage(route string) (string, PageNotFound, error) {
 		return "", false, fmt.Errorf("Error reading global config: %w", err)
 	}
 
-	// Use precompiled template and parsed markdown/meta
-	pageData := PageData{
-		Content:      template.HTML(mp.Markdown), // Already parsed Markdown
-		Data:         mp.Meta,                    // Metadata
-		GlobalConfig: *gc,                        // Global config
-	}
-
 	// Render the page using the precompiled page-specific template
 	var pageBuffer bytes.Buffer
-	err = mp.Parsed.Execute(&pageBuffer, pageData)
+	err = mp.Parsed.Execute(&pageBuffer, mp.PageData)
 	if err != nil {
 		return "", false, fmt.Errorf("Error rendering page-specific template: %w", err)
 	}
@@ -56,12 +49,12 @@ func RenderPage(route string) (string, PageNotFound, error) {
 		return "", false, fmt.Errorf("Error retrieving layout template: %w", err)
 	}
 
-	finalSeo := seo.CombineSeo(gc.GlobalSEO, mp.Config.SEO)
+	finalSeo := seo.CombineSeo(gc.GlobalSEO, seo.PageSEO(mp.Seo))
 
 	// Render the final page using the layout template
 	layoutData := PageData{
 		Content:      template.HTML(pageBuffer.String()),
-		Data:         mp.Meta,
+		Data:         mp.PageData,
 		GlobalConfig: *gc,
 		SEO:          finalSeo,
 	}

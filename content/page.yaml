@@ -1,0 +1,16 @@
+mimi:
+  route: "/"
+  type: "page"
+  title: "Welcome asdf"
+  description: "This is the home page."
+  layout: "sitedata/theme/layout.html"
+  template: "sitedata/theme/templates/page.template.html"
+
+seo:
+  title: "Welcome asdf"
+  description: "This is the home page."
+
+meta:
+  description: "This is an example page rendered from Markdown."
+  author: "John Doe"
+
