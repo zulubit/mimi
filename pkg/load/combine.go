@@ -16,5 +16,10 @@ func BuildInternals() error {
 		return err
 	}
 
+	err = buildTemplateCache()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

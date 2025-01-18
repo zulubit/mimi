@@ -1,0 +1,6 @@
+{{define "foot"}}
+	{{ range .GlobalConfig.Inserts.EndOfBody }}{{ .Script }}{{ end }}
+</body>
+
+</html>
+{{end}}

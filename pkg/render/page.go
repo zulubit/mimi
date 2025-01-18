@@ -31,38 +31,28 @@ func RenderPage(route string) (string, PageNotFound, error) {
 		return "", true, errors.New("page not found in cache")
 	}
 
+	tp, err := load.GetTemplates()
+	if err != nil {
+		return "", false, fmt.Errorf("Error parsing templates: %w", err)
+	}
+
 	gc, err := load.GetConfig()
 	if err != nil {
 		return "", false, fmt.Errorf("Error reading global config: %w", err)
 	}
 
-	// Render the page using the precompiled page-specific template
-	var pageBuffer bytes.Buffer
-	err = mp.Parsed.Execute(&pageBuffer, mp.PageData)
-	if err != nil {
-		return "", false, fmt.Errorf("Error rendering page-specific template: %w", err)
-	}
+	finalSeo := seo.CombineSeo(gc.GlobalSEO, seo.PageSEO(mp.SEO))
 
-	// Retrieve the cached layout template
-	layoutTemplate, err := load.GetLayoutTemplate()
-	if err != nil {
-		return "", false, fmt.Errorf("Error retrieving layout template: %w", err)
-	}
-
-	finalSeo := seo.CombineSeo(gc.GlobalSEO, seo.PageSEO(mp.Seo))
-
-	// Render the final page using the layout template
-	layoutData := PageData{
-		Content:      template.HTML(pageBuffer.String()),
-		Data:         mp.PageData,
+	data := PageData{
+		Data:         mp,
 		GlobalConfig: *gc,
 		SEO:          finalSeo,
 	}
 
 	var renderedPage bytes.Buffer
-	err = layoutTemplate.Execute(&renderedPage, layoutData)
+	err = tp.ExecuteTemplate(&renderedPage, mp.Mimi.Template, data)
 	if err != nil {
-		return "", false, fmt.Errorf("Error rendering final page with layout: %w", err)
+		fmt.Printf("Failed to render template: %v", err)
 	}
 
 	return renderedPage.String(), false, nil

@@ -2,19 +2,11 @@ package load
 
 import (
 	"fmt"
-	"html/template"
 
 	"github.com/zulubit/mimi/pkg/read"
 	"github.com/zulubit/mimi/pkg/seo"
 	"gopkg.in/yaml.v3"
 )
-
-// PageStack now holds the raw template, parsed template, markdown, and parsed metadata
-type PageStack struct {
-	PageData PageData
-	Parsed   *template.Template // Precompiled template
-	Seo      seo.SEO
-}
 
 type Mimi struct {
 	Route       string `yaml:"route"`
@@ -32,18 +24,18 @@ type SEO struct {
 
 // Combine known structs and a flexible map for unknown fields
 type PageData struct {
-	Mimi Mimi                   `yaml:"mimi"`
-	SEO  SEO                    `yaml:"seo"`
-	Meta map[string]interface{} `yaml:"meta"` // Catch-all for other fields
+	Mimi   Mimi                     `yaml:"mimi"`
+	SEO    seo.PageSEO              `yaml:"seo"`
+	Meta   map[string]interface{}   `yaml:"meta"` // Catch-all for other fields
+	Blocks []map[string]interface{} `yaml:"blocks"`
 }
 
 type Route string
 
-type PageCache map[Route]PageStack
+type PageCache map[Route]*PageData
 
 var config *read.Config
 var pages PageCache
-var layoutTemplate *template.Template
 
 func BuildConfigCache() error {
 	rc, err := read.ReadConfig()
@@ -52,13 +44,6 @@ func BuildConfigCache() error {
 	}
 
 	config = rc
-
-	// Load layout template
-	layout, err := template.ParseFiles("sitedata/theme/layout.html")
-	if err != nil {
-		return err
-	}
-	layoutTemplate = layout
 
 	return nil
 }
@@ -99,25 +84,10 @@ func BuildPageCache() error {
 		// Append the page configuration for later validation
 		pcc = append(pcc, *pd)
 
-		// Parse the template
-		tp, err := read.ReadTemplate(pd.Mimi.Template)
-		if err != nil {
-			return fmt.Errorf("failed to read template %q: %w", pd.Mimi.Template, err)
-		}
-
-		// Precompile the template
-		parsedTemplate, err := template.New("page-" + pd.Mimi.Route).Parse(string(tp))
-		if err != nil {
-			return fmt.Errorf("failed to parse template for route %q: %w", pd.Mimi.Route, err)
-		}
-
 		// TODO: merge seo
 
 		// Build the PageStack
-		currStack := PageStack{
-			PageData: *pd,
-			Parsed:   parsedTemplate,
-		}
+		currStack := pd
 
 		c[Route(pd.Mimi.Route)] = currStack
 	}
@@ -136,16 +106,6 @@ func GetPages() (PageCache, error) {
 		}
 	}
 	return pages, nil
-}
-
-func GetLayoutTemplate() (*template.Template, error) {
-	if layoutTemplate == nil {
-		err := BuildConfigCache() // Ensure layout is cached
-		if err != nil {
-			return nil, err
-		}
-	}
-	return layoutTemplate, nil
 }
 
 func parseYaml(p []byte) (*PageData, error) {
