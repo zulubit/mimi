@@ -6,6 +6,8 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>{{ .SEO.Title }}</title>
+	{{ if .SEO.Description }}<meta name="description" content="{{ .SEO.Description }}">{{ end }}
+	{{ if .SEO.Keywords }}<meta name="keywords" content="{{ join .SEO.Keywords ", " }}">{{ end }}
 	{{ range .SEO.Extra }}{{ . }}{{ end }}
 	{{ range .GlobalConfig.Inserts.Head }}{{ .Script }}{{ end }}
 </head>
