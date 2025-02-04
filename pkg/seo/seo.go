@@ -4,8 +4,6 @@ import (
 	"html/template"
 )
 
-// TODO: we're not corretly merging in seo data to pages. we need to figure this out, fast.
-
 type GlobalSEO struct {
 	GlobalTitle  string          `json:"title"`
 	GlobalExtras []template.HTML `json:"global"`
