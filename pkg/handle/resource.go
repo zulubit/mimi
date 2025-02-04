@@ -14,6 +14,7 @@ func GetResource(w http.ResponseWriter, r *http.Request) {
 
 	renderedPage, notFound, err := render.RenderPage(route)
 
+	// TODO: Implement a default 404 html page and take 404.html from theme if available.
 	if notFound {
 		health := map[string]string{
 			"error": "not found",

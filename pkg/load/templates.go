@@ -19,6 +19,8 @@ func buildTemplateCache() error {
 	// Create a new template object
 	tmpl := template.New("")
 
+	// TODO: on the topic of blocks, figure out how to define their fields.
+	// TODO: move template func collection elsewhere for readability
 	// Register the custom function first
 	tmpl.Funcs(map[string]interface{}{
 		"DynamicBlocks": func(blocks []map[string]interface{}, data interface{}) (template.HTML, error) {

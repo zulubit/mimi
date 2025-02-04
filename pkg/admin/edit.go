@@ -1,7 +1,5 @@
 package admin
 
-// TODO: these methods need to be changed to actually load resources lol
-
 import (
 	"encoding/json"
 	"fmt"
