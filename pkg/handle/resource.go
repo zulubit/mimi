@@ -14,15 +14,23 @@ func GetResource(w http.ResponseWriter, r *http.Request) {
 
 	renderedPage, notFound, err := render.RenderPage(route)
 
-	// TODO: Implement a default 404 html page and take 404.html from theme if available.
 	if notFound {
 		health := map[string]string{
 			"error": "not found",
 		}
 
-		w.WriteHeader(http.StatusNotFound)
+		// render 404 template if notFound
+		renderedPage, err := render.RenderSystemTemplate("404.html", "404")
+		if err != nil {
+			json.NewEncoder(w).Encode(health)
+		}
 
-		json.NewEncoder(w).Encode(health)
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusNotFound)
+		if _, err := w.Write([]byte(renderedPage)); err != nil {
+			fmt.Printf("Error writing response: %v\n", err)
+		}
+
 		return
 	}
 

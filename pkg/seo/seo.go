@@ -29,8 +29,15 @@ func CombineSeo(g GlobalSEO, p PageSEO) SEO {
 	extras := g.GlobalExtras
 	extras = append(extras, p.Extra...)
 
+	var combineTitle string
+	if len(p.Title) != 0 {
+		combineTitle = g.GlobalTitle + " - " + p.Title
+	} else {
+		combineTitle = g.GlobalTitle
+	}
+
 	s := SEO{
-		Title:       g.GlobalTitle + " - " + p.Title,
+		Title:       combineTitle,
 		Description: p.Description,
 		Keywords:    p.Keywords,
 		Extra:       extras,

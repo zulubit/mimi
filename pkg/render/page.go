@@ -57,3 +57,30 @@ func RenderPage(route string) (string, PageNotFound, error) {
 
 	return renderedPage.String(), false, nil
 }
+
+func RenderSystemTemplate(template, title string) (string, error) {
+	tp, err := load.GetTemplates()
+	if err != nil {
+		return "", fmt.Errorf("Error parsing templates: %w", err)
+	}
+
+	gc, err := load.GetConfig()
+	if err != nil {
+		return "", fmt.Errorf("Error reading global config: %w", err)
+	}
+
+	finalSeo := seo.CombineSeo(gc.GlobalSEO, seo.PageSEO{Title: title})
+
+	data := PageData{
+		GlobalConfig: *gc,
+		SEO:          finalSeo,
+	}
+
+	var renderedPage bytes.Buffer
+	err = tp.ExecuteTemplate(&renderedPage, template, data)
+	if err != nil {
+		fmt.Printf("Failed to render template: %v", err)
+	}
+
+	return renderedPage.String(), nil
+}
