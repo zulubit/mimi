@@ -19,7 +19,7 @@ func main() {
 	fmt.Println("Mimi is alive.")
 
 	// Start the server
-	err := http.ListenAndServe(":8080", loggedRouter)
+	err := http.ListenAndServe(":8089", loggedRouter)
 	panic(err)
 }
 

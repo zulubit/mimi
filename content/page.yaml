@@ -8,11 +8,14 @@ mimi:
 seo:
   title: "Welcome asdf"
   description: "This is the home page."
+  keywords:
+    - "test"
+    - "test 2"
 
 meta:
   description: "This is an example page rendered from Markdown."
   author: "John Doe"
 
 blocks:
-  - name: bla
+  - name: heading
     content: "Welcome to the site"

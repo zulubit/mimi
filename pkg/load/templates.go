@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"strings"
 )
 
 var templateCache *template.Template
@@ -58,6 +59,9 @@ func buildTemplateCache() error {
 			// Return the data wrapped in a <pre> tag
 			return template.HTML(fmt.Sprintf("<pre>%s</pre>", buf.String())), nil
 		},
+		"join": func(a []string, sep string) string {
+			return strings.Join(a, sep)
+		},
 	})
 
 	// Parse the templates from the directories
@@ -72,7 +76,7 @@ func buildTemplateCache() error {
 		return err
 	}
 
-	tmpl, err = tmpl.ParseGlob("sitedata/theme/blocks/*.html")
+	tmpl, err = tmpl.ParseGlob("sitedata/theme/blocks/**/render-*.html")
 	if err != nil {
 		return err
 	}
